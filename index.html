@@ -5,1016 +5,876 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Petualangan Literasi - Danau Kaco</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800&display=swap');
-        body { font-family: 'Nunito', sans-serif; background-color: #e0f7fa; color: #333; overflow-x: hidden;}
-        h1, h2, h3, .font-heading { font-family: 'Fredoka One', cursive; }
+        body { font-family: 'Nunito', sans-serif; background-color: #e0f2fe; overflow-x: hidden; user-select: none; }
+        .font-heading { font-family: 'Fredoka One', cursive; }
+        .hide { display: none !important; }
+        .btn-bounce { transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out; }
+        .btn-bounce:active { transform: scale(0.95) translateY(4px); box-shadow: 0 0px 0 0 #000; }
+        .shadow-3d { box-shadow: 0 6px 0 0 rgba(0,0,0,0.2); }
+        .bg-adventure { background: url('https://placehold.co/1920x1080/065f46/d1fae5?text=Hutan+Kerinci') no-repeat center center fixed; background-size: cover; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 20px; border: 4px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        .bg-fantasy { background: linear-gradient(135deg, #00acc1 0%, #00838f 100%); }
-        .btn-game { 
-            background: linear-gradient(to bottom, #ffeb3b, #fbc02d);
-            border-bottom: 4px solid #f57f17;
-            border-radius: 12px;
-            transition: all 0.1s;
-        }
-        .btn-game:active { transform: translateY(4px); border-bottom: 0px; }
+        /* Animasi Koin/Bintang */
+        @keyframes pop { 0% { transform: scale(0); opacity: 0;} 80% { transform: scale(1.2); opacity: 1;} 100% { transform: scale(1); opacity: 1;} }
+        .animate-pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-        }
-        
-        .screen { display: none; min-height: 100vh; padding: 20px; }
-        .screen.active { display: flex; flex-direction: column; animation: fadeIn 0.5s ease-in; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        
-        .floating { animation: float 3s ease-in-out infinite; }
-        
-        /* Game Specific Styles */
-        .card-match { perspective: 1000px; cursor: pointer; height: 100px;}
-        .card-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative;}
+        /* Map Path */
+        .map-node { width: 60px; height: 60px; border-radius: 50%; border: 4px solid white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; cursor: pointer; transition: all 0.3s; }
+        .node-locked { background: #9ca3af; color: #f3f4f6; cursor: not-allowed; }
+        .node-active { background: #3b82f6; color: white; box-shadow: 0 0 15px #3b82f6; animation: pulse 2s infinite; }
+        .node-done { background: #10b981; color: white; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* Game Elements */
+        .card-match { perspective: 1000px; cursor: pointer; height: 120px; }
+        .card-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
         .card-match.flipped .card-inner { transform: rotateY(180deg); }
-        .card-front, .card-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; display:flex; align-items:center; justify-content:center; border-radius: 10px; font-weight: bold; text-align: center; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
-        .card-front { background: #00acc1; color: white; }
-        .card-back { background: white; transform: rotateY(180deg); border: 2px solid #00acc1; color:#00838f;}
+        .card-front, .card-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; }
+        .card-front { background: #2563eb; color: white; font-size: 2rem; }
+        .card-back { background: white; color: #1e3a8a; transform: rotateY(180deg); border: 2px solid #2563eb; font-weight: bold; }
+        
+        .draggable { cursor: grab; }
+        .draggable:active { cursor: grabbing; }
 
-        .maze-cell { width: 30px; height: 30px; border: 1px solid #ccc; display: inline-block;}
-        .maze-wall { background-color: #006064; }
-        .maze-path { background-color: #e0f7fa; }
-        .maze-player { background-color: #ffca28; border-radius: 50%; transform: scale(0.8); }
-        .maze-exit { background-color: #4caf50; }
-
-        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; color: white; font-size: 24px; font-weight: bold;}
+        /* Loader */
+        .loader { border: 5px solid #f3f3f4; border-top: 5px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+<body class="text-gray-800">
 
-    <!-- Loading -->
-    <div id="loading" class="loading-overlay flex-col">
-        <i class="fas fa-spinner fa-spin fa-3x mb-4 text-yellow-400"></i>
-        <p id="loading-text">Menyimpan Petualangan...</p>
-    </div>
-
-    <!-- Audio Elements -->
-    <audio id="bg-music" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2476579047.mp3?filename=adventure-game-114705.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-correct"><source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-wrong"><source src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_19315dc211.mp3?filename=negative_beeps-6008.mp3" type="audio/mpeg"></audio>
-    
-    <button onclick="toggleMute()" class="fixed top-4 right-4 z-50 bg-white p-3 rounded-full shadow-lg text-teal-600 hover:text-teal-800">
-        <i id="mute-icon" class="fas fa-volume-up text-xl"></i>
-    </button>
-
-    <!-- SCREEN 1: LOGIN -->
-    <div id="screen-login" class="screen active items-center justify-center bg-fantasy text-white bg-[url('https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&q=80')] bg-cover bg-center">
-        <div class="glass-panel p-8 max-w-md w-full text-center relative z-10">
-            <h1 class="text-4xl text-yellow-300 mb-2 drop-shadow-md floating">Petualangan Literasi</h1>
-            <h2 class="text-2xl font-bold mb-6">Misteri Danau Kaco</h2>
-            <p class="mb-6 italic">"Belajar Cerita, Bermain Seru, Raih Bintang!"</p>
+    <!-- AUDIO SYSTEM (Generated via Web Audio API, no external files needed) -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
             
-            <div class="space-y-4">
-                <input type="text" id="login-nama" placeholder="Nama Lengkap" class="w-full p-3 rounded-xl text-gray-800 border-2 border-teal-300 focus:outline-none focus:border-yellow-400">
-                <input type="text" id="login-kelas" value="Kelas 6" readonly class="w-full p-3 rounded-xl text-gray-600 font-bold border-2 border-teal-300 bg-gray-100 cursor-not-allowed focus:outline-none">
-                <button onclick="login()" class="btn-game w-full p-4 text-xl font-heading text-teal-900 mt-4">
-                    MULAI PETUALANGAN <i class="fas fa-rocket ml-2"></i>
-                </button>
-            </div>
-            <button onclick="showScreen('screen-teacher-login')" class="text-sm text-teal-100 mt-6 underline">Masuk sebagai Guru</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 2: DASHBOARD SISWA -->
-    <div id="screen-dashboard" class="screen max-w-4xl mx-auto">
-        <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-md mb-6">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center text-3xl border-4 border-teal-500">
-                    <i class="fas fa-user-astronaut text-teal-600"></i>
-                </div>
-                <div>
-                    <h2 class="font-heading text-xl text-teal-800" id="dash-nama">Pemain</h2>
-                    <p class="text-sm font-bold text-gray-500" id="dash-kelas">Kelas</p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="text-center bg-yellow-100 px-4 py-2 rounded-xl border border-yellow-300 shadow-sm">
-                    <i class="fas fa-star text-yellow-500 text-xl"></i>
-                    <div class="font-bold text-yellow-700" id="dash-bintang">0</div>
-                </div>
-                <div class="text-center bg-blue-100 px-4 py-2 rounded-xl border border-blue-300 shadow-sm">
-                    <i class="fas fa-trophy text-blue-500 text-xl"></i>
-                    <div class="font-bold text-blue-700" id="dash-level">Lv 1</div>
-                </div>
-                <button onclick="logout()" class="bg-red-100 text-red-600 px-3 rounded-xl hover:bg-red-200"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Peta Materi -->
-            <div class="glass-panel p-6">
-                <h3 class="font-heading text-2xl text-teal-700 mb-4 border-b-2 border-teal-200 pb-2"><i class="fas fa-map-marked-alt mr-2"></i> Peta Materi</h3>
-                <div class="space-y-3">
-                    <button onclick="openMateri(1)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">1. Mengenal Cerita Rakyat</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                    <button onclick="openMateri(2)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">2. Membaca Legenda Danau Kaco</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                    <button onclick="openMateri(3)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">3. Unsur Intrinsik Cerita</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                    <button onclick="openMateri(4)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">4. Memahami Tokoh & Watak</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                    <button onclick="openMateri(5)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">5. Alur & Pesan Moral</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                    <button onclick="openMateri(6)" class="w-full text-left bg-white p-4 rounded-xl shadow hover:shadow-md border-l-4 border-teal-500 flex justify-between items-center transition hover:-translate-y-1">
-                        <span class="font-bold text-gray-700">6. Kosakata & Keterampilan</span> <i class="fas fa-chevron-right text-teal-400"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Zona Permainan -->
-            <div class="glass-panel p-6">
-                <h3 class="font-heading text-2xl text-orange-600 mb-4 border-b-2 border-orange-200 pb-2"><i class="fas fa-gamepad mr-2"></i> Zona Permainan</h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openGame(1)" class="bg-gradient-to-r from-orange-400 to-red-500 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-map-signs text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Petualangan</span>
-                    </button>
-                    <button onclick="openGame(2)" class="bg-gradient-to-r from-blue-400 to-blue-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-sort-numeric-down text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Susun Cerita</span>
-                    </button>
-                    <button onclick="openGame(3)" class="bg-gradient-to-r from-purple-400 to-purple-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-user-secret text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Tebak Tokoh</span>
-                    </button>
-                    <button onclick="openGame(4)" class="bg-gradient-to-r from-pink-400 to-pink-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-clone text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Pasangkan</span>
-                    </button>
-                    <button onclick="openGame(5)" class="bg-gradient-to-r from-green-400 to-green-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-dungeon text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Labirin</span>
-                    </button>
-                    <button onclick="openGame(6)" class="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-check-circle text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Benar/Salah</span>
-                    </button>
-                    <button onclick="openGame(7)" class="bg-gradient-to-r from-indigo-400 to-indigo-600 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24">
-                        <i class="fas fa-font text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Kata Rahasia</span>
-                    </button>
-                    <button onclick="openGame(8)" class="bg-gradient-to-r from-red-600 to-red-800 text-white p-3 rounded-xl shadow flex flex-col items-center justify-center hover:scale-105 transition h-24 border-2 border-yellow-300">
-                        <i class="fas fa-dragon text-2xl mb-1"></i> <span class="text-xs font-bold text-center">Boss Kuis!</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mt-6 glass-panel p-6">
-            <h3 class="font-heading text-xl text-teal-800 mb-3"><i class="fab fa-youtube text-red-600"></i> Video Pembelajaran</h3>
-            <div class="aspect-w-16 aspect-h-9 w-full rounded-xl overflow-hidden shadow-lg border-4 border-white bg-black h-64 md:h-96">
-                <!-- Fallback to search if specific embed is blocked, using an educational generic or exact embed code -->
-                <iframe class="w-full h-full" src="https://www.youtube.com/embed/n4q4-YyYw0k?rel=0" title="Legenda Danau Kaco" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-            <p class="mt-2 text-sm text-gray-600 text-center">Video Referensi: Cerita Rakyat Danau Kaco Jambi.</p>
-        </div>
-    </div>
-
-    <!-- SCREEN: CONTENT/MATERI -->
-    <div id="screen-materi" class="screen max-w-4xl mx-auto">
-        <button onclick="showScreen('screen-dashboard')" class="bg-white text-teal-600 px-4 py-2 rounded-xl shadow-md w-max mb-4 font-bold"><i class="fas fa-arrow-left"></i> Kembali ke Peta</button>
-        <div class="glass-panel p-6 md:p-10" id="materi-container">
-            <!-- Injected dynamically -->
-        </div>
-        <button id="btn-kuis" class="btn-game w-full mt-6 p-4 text-xl font-heading text-teal-900 hidden">
-            MULAI KUIS TANTANGAN <i class="fas fa-khanda ml-2"></i>
-        </button>
-    </div>
-
-    <!-- SCREEN: KUIS -->
-    <div id="screen-kuis" class="screen max-w-2xl mx-auto items-center justify-center">
-        <div class="glass-panel p-8 w-full">
-            <div class="flex justify-between items-center mb-6">
-                <span id="kuis-progress" class="font-bold text-gray-600">Soal 1/10</span>
-                <span class="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full font-bold text-sm" id="kuis-skor-live"><i class="fas fa-star"></i> Skor: 0</span>
-            </div>
-            <div id="kuis-soal" class="text-xl font-bold text-teal-900 mb-6 text-center">Pertanyaan akan muncul di sini?</div>
-            <div id="kuis-opsi" class="grid grid-cols-1 gap-4">
-                <!-- Injected dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- SCREEN: GAME (Dynamic Container) -->
-    <div id="screen-game" class="screen max-w-4xl mx-auto items-center justify-center">
-        <button onclick="showScreen('screen-dashboard')" class="bg-white text-teal-600 px-4 py-2 rounded-xl shadow-md w-max mb-4 absolute top-4 left-4 font-bold z-50"><i class="fas fa-arrow-left"></i> Keluar Game</button>
-        <div class="glass-panel p-8 w-full min-h-[60vh] flex flex-col items-center justify-center relative" id="game-container">
-            <!-- Game UI injected here -->
-        </div>
-    </div>
-
-    <!-- SCREEN: TEACHER LOGIN & DASHBOARD (Simplified UI) -->
-    <div id="screen-teacher-login" class="screen items-center justify-center">
-        <div class="glass-panel p-8 max-w-md w-full text-center">
-            <h2 class="font-heading text-2xl text-teal-800 mb-6">Portal Guru</h2>
-            <input type="password" id="teacher-pin" placeholder="Masukkan PIN Guru (1234)" class="w-full p-3 rounded-xl border-2 border-teal-300 mb-4 text-center text-2xl">
-            <button onclick="loginTeacher()" class="bg-teal-600 text-white w-full p-3 rounded-xl font-bold">Masuk</button>
-            <button onclick="showScreen('screen-login')" class="mt-4 text-sm text-gray-500 underline">Kembali ke Halaman Siswa</button>
-        </div>
-    </div>
-
-    <div id="screen-teacher-dash" class="screen max-w-6xl mx-auto">
-         <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-md mb-6">
-            <h2 class="font-heading text-2xl text-teal-800">Dashboard Guru</h2>
-            <button onclick="showScreen('screen-login')" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold"><i class="fas fa-sign-out-alt"></i> Keluar</button>
-        </div>
-        <div class="glass-panel p-6 bg-white overflow-x-auto">
-            <button onclick="loadTeacherData()" class="bg-teal-500 text-white px-4 py-2 rounded mb-4"><i class="fas fa-sync"></i> Refresh Data</button>
-            <div id="teacher-data-table">Memuat data dari Google Sheets...</div>
-        </div>
-    </div>
-
-<script>
-/* =========================================
-   1. KONFIGURASI API & STATE
-========================================= */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjtS776lknsr1P4uh94WLpX1nCFtDIRBEwEpbhDCRuyBK0CKVXb9efagRQwrmMjFfFetQ/exec";
-let currentUser = null;
-let isMuted = false;
-let currentModule = 0;
-let currentQuiz = [];
-let currentQIndex = 0;
-let score = 0;
-let correctAns = 0;
-
-/* =========================================
-   2. DATA MATERI PEMBELAJARAN
-========================================= */
-const MATERI_DATA = {
-    1: {
-        title: "Mengenal Cerita Rakyat & Legenda",
-        content: `
-            <div class="space-y-4 text-gray-700 leading-relaxed text-lg">
-                <img src="https://images.unsplash.com/photo-1518991361250-98835848aa61?auto=format&fit=crop&q=80&w=800" class="w-full h-64 object-cover rounded-xl shadow-md mb-4" alt="Ilustrasi Cerita">
-                <p><strong>Cerita rakyat</strong> adalah cerita yang berasal dari masyarakat dan berkembang dalam masyarakat pada masa lampau. Cerita ini menjadi ciri khas setiap bangsa yang memiliki kultur budaya yang beraneka ragam mencakup kekayaan budaya dan sejarah yang dimiliki masing-masing bangsa.</p>
-                <p><strong>Legenda</strong> adalah cerita rakyat zaman dahulu yang ada hubungannya dengan peristiwa sejarah. Legenda biasanya bercerita tentang asal usul suatu tempat, benda, atau kejadian alam.</p>
-                <h4 class="font-bold text-teal-700 mt-4">Ciri-ciri Cerita Rakyat:</h4>
-                <ul class="list-disc pl-6">
-                    <li>Disampaikan turun-temurun.</li>
-                    <li>Tidak diketahui siapa yang pertama kali membuatnya (anonim).</li>
-                    <li>Kaya nilai luhur dan pesan moral.</li>
-                    <li>Bersifat tradisional.</li>
-                </ul>
-                <p class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mt-4"><em>Perbedaan dengan dongeng:</em> Dongeng murni fiktif (khayalan), sedangkan legenda seringkali dipercaya pernah terjadi dan terikat pada suatu lokasi di dunia nyata.</p>
-            </div>
-        `
-    },
-    2: {
-        title: "Legenda Danau Kaco",
-        content: `
-            <div class="space-y-6 text-gray-800 leading-relaxed text-lg text-justify" id="story-reader">
-                <div class="bg-blue-50 p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-book-open"></i> BACALAH CERITA BERIKUT DENGAN CERMAT! (Sesuai Teks Asli Buku)</p>
-                </div>
-                <img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&q=80&w=800" class="w-full h-64 object-cover rounded-xl shadow-md" alt="Danau Kaco">
-                
-                <p>Alkisah di daerah kaki Gunung Kerinci berdiri sebuah kerajaan yang dipimpin Raja Gagak. Ia memiliki seorang putri cantik bernama Putri Napal Melintang yang sangat disayanginya. Sejak kecil, semua keinginan sang putri selalu dipenuhi.</p>
-                
-                <p>Seiring bertambah usia, kecantikan Putri Napal Melintang semakin terdengar hingga ke seluruh negeri. Namun, ia belum pernah melihat wajahnya sendiri secara langsung karena saat itu belum ada cermin. Ia hanya sesekali melihat bayangannya dari pantulan benda-benda mengilap.</p>
-
-                <p>Sebenarnya, ketika seseorang ingin melihat pantulan wajahnya, dia bisa pergi ke sungai atau perairan yang luas. Sayangnya, Putri Napal Melintang tidak pernah diizinkan pergi ke sungai yang letaknya cukup jauh dari istananya.</p>
-
-                <p>Putri Napal Melintang tumbuh menjadi sosok perempuan dewasa yang semakin menawan. Kisah kecantikannya tersebar dan membuat para pangeran dari berbagai kerajaan ingin meminangnya.</p>
-                
-                <img src="https://images.unsplash.com/photo-1601550974868-6c84b49ec9d2?auto=format&fit=crop&q=80&w=800" class="w-full h-64 object-cover rounded-xl shadow-md" alt="Harta Karun">
-
-                <p>Suatu hari, datang pangeran dari Jambi untuk meminang Putri Napal Melintang. Ia meminta restu Raja Gagak dan menceritakan kemakmuran kerajaannya. Raja Gagak mengizinkannya dengan syarat sang pangeran menyerahkan harta berharga sebagai bukti keseriusannya.</p>
-
-                <p>Pangeran Jambi pun memberikan batu permata, intan, dan berlian, serta berjanji akan kembali menjelang hari pernikahan. Raja Gagak sangat kagum melihat banyaknya harta yang diberikan. Kemudian ia menyimpan harta pemberian Pangeran Jambi di tempat tersembunyi yang terbaik. Melihat setumpuk harta berkilau itu, Raja Gagak bergumam, betapa mudah ia memperoleh harta kekayaan dari kerajaan lain. Sejak saat itu, hati sang raja tergoda untuk mendapatkan lebih banyak harta dengan memanfaatkan kecantikan putrinya.</p>
-
-                <p>Beberapa waktu kemudian, datang pangeran dari Pulau Punjung untuk meminang Putri Napal Melintang. Sang pangeran menghadap Raja Gagak dan menuturkan maksud hatinya. Raja Gagak bingung. Ia ingin memberi tahu bahwa putrinya telah dilamar Pangeran Jambi, tetapi sifat tamaknya membuatnya memanfaatkan kesempatan untuk mendapatkan lebih banyak harta. Akhirnya, ia menerima pinangan Pangeran Pulau Punjung dengan syarat pangeran tersebut harus menyerahkan sejumlah harta berharga. Tak disangka-sangka, Pangeran Pulau Punjung kali ini menyerahkan beragam batu permata dan logam mulia. Jumlahnya jauh lebih banyak daripada yang diserahkan Pangeran Jambi.</p>
-
-                <p>Ternyata, tidak hanya Pangeran Jambi dan Pangeran Pulau Punjung yang datang ke Kerajaan Negeri Kerinci. Beberapa waktu kemudian, pangeran-pangeran dari kerajaan lain pun berdatangan. Tak hanya satu atau dua, melainkan beberapa pangeran yang datang silih berganti. Semuanya datang dengan tujuan yang sama, yaitu meminang putrinya.</p>
-
-                <p>Raja Gagak rupanya sudah semakin terbiasa berbohong. Satu dua kali sang raja tidak bicara jujur, ia pun terus melakukan hal yang sama untuk mendapatkan harta berlimpah.</p>
-
-                <p>Suatu hari, Putri Napal Melintang penasaran dengan harta yang banyak di kerajaannya. Bukannya berbicara jujur kepada sang putri, Raja Gagak justru berbohong. Ia berkata bahwa harta tersebut adalah hadiah dari para sahabatnya dari berbagai negeri karena rasa kagum mereka terhadap Negeri Kerinci.</p>
-
-                <p>Tak puas dengan jawaban sang ayah, Putri Napal Melintang yang masih penasaran kembali bertanya di kemudian hari. Namun, Raja Gagak tampaknya sudah semakin dikuasai oleh ketamakan. Ia malah mengancam sang putri dan menyuruhnya untuk tidak bertanya hal yang menurutnya bukan urusannya.</p>
-
-                <p>Waktu terus berlalu hingga hari pernikahan Putri Napal Melintang semakin dekat. Raja Gagak mulai panik dan khawatir para pangeran akan datang menagih janji. Dikuasai kebingungan dan ketakutan, ia pun berpikir untuk melarikan diri bersama putrinya.</p>
-
-                <p>Suatu hari, Raja Gagak mengajak Putri Napal Melintang pergi jauh. Meski tidak tahu tujuannya, sang putri yang penurut mengikuti ayahnya. Raja Gagak juga membawa semua harta yang ia kumpulkan dari para pangeran.</p>
-
-                <p>Dalam perjalanan tanpa tujuan, Putri Napal Melintang tidak pernah mengeluh. Sementara itu, Raja Gagak terus berjalan dengan rasa takut jika para pangeran atau utusan kerajaan lain menemukannya.</p>
-
-                <p>Di tepi telaga yang jernih, Raja Gagak dan Putri Napal Melintang beristirahat. Putri bertanya kepada ayahnya mengapa mereka pergi jauh. Namun, karena lelah dan takut, Raja Gagak marah dan menyalahkan kecantikan putrinya sebagai penyebab mereka harus melarikan diri.</p>
-
-                <p>Putri Napal Melintang sangat sedih. Ia menangis di tepi telaga, tetapi tetap memohon maaf kepada ayahnya meskipun sebenarnya kebohongan Raja Gagaklah yang menjadi penyebab masalah.</p>
-
-                <p>Tak kuat lagi melanjutkan pelarian, Raja Gagak memojokkan sang putri dan mengatakan bahwa pelarian itu harus diakhiri dengan kematian. Ia memaksa memilih siapa yang harus mengorbankan diri tenggelam di telaga. Putri Napal Melintang yang baik hati pun bertekad menjaga nama baik ayahnya dan Kerajaan Negeri Kerinci.</p>
-
-                <p>Sebelum mengorbankan diri, Putri Napal Melintang meminta izin bercermin di telaga. Untuk pertama dan terakhir kalinya ia melihat wajahnya, lalu berjalan ke tengah telaga hingga tenggelam. Setelah melihat pantulan wajahnya sendiri di telaga, Putri Napal Melintang berjalan terus hingga ke tengah telaga yang semakin dalam. Kecantikannya telah membawanya ke dalam kesengsaraan akhir hidupnya.</p>
-                
-                <p>Tak percaya dengan pengorbanan putrinya, Raja Gagak memanggil-manggil sang putri. Namun, semua terlambat. Putri Napal Melintang sudah tenggelam ke dasar telaga.</p>
-
-                <p>Sambil menangis dan meraung-raung, Raja Gagak menyesali perbuatannya. Ia pun merasa tak sanggup lagi menyimpan harta berharga yang sesungguhnya telah membawa kesengsaraan bagi dirinya sendiri. Akhirnya, semua harta pinangan itu dibuang ke dalam telaga yang sama. Tak tersisa satu batu kecil pun.</p>
-
-                <p>Sejak saat itu, ketika malam tiba, Danau Kaco yang jernih dan biru pada siang hari mulai mengeluarkan kilauan yang indah. Masyarakat meyakini bahwa kilau itu berasal dari emas dan permata yang berada di dasar danau, serta kecantikan Putri Napal Melintang yang menjaga danau itu.</p>
-            </div>
-            <button onclick="readAloud()" class="mt-4 bg-teal-100 text-teal-800 px-4 py-2 rounded shadow hover:bg-teal-200"><i class="fas fa-volume-up"></i> Dengarkan Cerita (Robot)</button>
-        `
-    },
-    3: { title: "Unsur Intrinsik Cerita", content: `<div class="space-y-4">
-        <p>Unsur intrinsik adalah unsur-unsur yang membangun cerita dari dalam.</p>
-        <ul class="list-disc pl-6 text-lg space-y-2">
-            <li><strong>Tema:</strong> Ketamakan/Keserakahan. Cerita ini berpusat pada keserakahan Raja Gagak akan harta.</li>
-            <li><strong>Latar Tempat:</strong> Kaki Gunung Kerinci, Kerajaan Negeri Kerinci, Tepi Telaga (Danau Kaco).</li>
-            <li><strong>Latar Waktu:</strong> Zaman dahulu (Alkisah), Suatu hari, Malam hari.</li>
-            <li><strong>Alur:</strong> Maju (berjalan secara urut dari awal kehidupan putri hingga ia tenggelam).</li>
-        </ul></div>` },
-    4: { title: "Memahami Tokoh dan Watak", content: `<div class="space-y-4">
-        <div class="bg-red-50 p-4 rounded border border-red-200"><strong>Raja Gagak:</strong> Tamak, serakah, pembohong, pengecut. (Memanfaatkan putrinya demi harta).</div>
-        <div class="bg-blue-50 p-4 rounded border border-blue-200"><strong>Putri Napal Melintang:</strong> Penurut, cantik jelita, baik hati, rela berkorban. (Meskipun disalahkan, ia tetap patuh).</div>
-        <div class="bg-yellow-50 p-4 rounded border border-yellow-200"><strong>Pangeran Jambi & Pangeran Pulau Punjung:</strong> Kaya raya, mudah terpesona oleh kecantikan.</div>
-        </div>` },
-    5: { title: "Memahami Alur & Pesan Moral", content: `<div class="space-y-4">
-        <h4 class="font-bold text-xl">Amanat (Pesan Moral):</h4>
-        <div class="bg-green-100 p-4 rounded-xl shadow border border-green-300">
-            <ol class="list-decimal pl-4">
-                <li>Janganlah menjadi orang yang serakah. Keserakahan hanya akan membawa penderitaan dan penyesalan di akhir.</li>
-                <li>Kebohongan pada akhirnya akan terbongkar dan merugikan diri sendiri serta orang yang kita sayangi.</li>
-                <li>Kita tidak boleh memanfaatkan atau mengorbankan orang lain demi kepentingan dan kekayaan pribadi.</li>
-            </ol>
-        </div></div>` },
-    6: { title: "Kosakata & Keterampilan Berbahasa", content: `<div class="space-y-4">
-        <table class="w-full text-left border-collapse">
-            <tr class="bg-teal-600 text-white"><th class="p-2 border">Kata</th><th class="p-2 border">Makna Kontekstual</th></tr>
-            <tr><td class="p-2 border font-bold">Meminang</td><td class="p-2 border">Melamar untuk dijadikan istri.</td></tr>
-            <tr class="bg-gray-50"><td class="p-2 border font-bold">Pantulan</td><td class="p-2 border">Bayangan atau imbas kembali dari cermin/air.</td></tr>
-            <tr><td class="p-2 border font-bold">Tamak</td><td class="p-2 border">Serakah; selalu ingin mendapat lebih banyak untuk diri sendiri.</td></tr>
-            <tr class="bg-gray-50"><td class="p-2 border font-bold">Silih berganti</td><td class="p-2 border">Secara bergantian; susul-menyusul.</td></tr>
-            <tr><td class="p-2 border font-bold">Meraung-raung</td><td class="p-2 border">Menangis dengan suara keras karena sedih atau menyesal.</td></tr>
-        </table></div>` }
-};
-
-/* =========================================
-   3. DATA KUIS (60 Soal, 10 per materi)
-========================================= */
-// Disederhanakan untuk efisiensi code. Tiap array memiliki 10 objek {q, a, c} (q:question, a:options, c:correct index)
-const QUIZ_DATA = {
-    1: [
-        {q: "Apa yang dimaksud dengan cerita rakyat?", a: ["Cerita dari masa depan", "Cerita yang berkembang di masyarakat pada masa lampau", "Cerita berita modern", "Cerita pribadi"], c: 1},
-        {q: "Manakah yang bukan merupakan ciri cerita rakyat?", a: ["Disampaikan lisan", "Penciptanya anonim", "Memiliki pesan moral", "Ditulis oleh ilmuwan"], c: 3},
-        {q: "Apa sebutan untuk cerita yang berhubungan dengan asal-usul suatu tempat?", a: ["Mitos", "Fabel", "Legenda", "Sage"], c: 2},
-        {q: "Cerita Danau Kaco termasuk dalam jenis...", a: ["Legenda", "Fabel", "Mitos", "Sejarah faktual"], c: 0},
-        {q: "Mengapa cerita rakyat diceritakan turun-temurun?", a: ["Untuk mencari uang", "Menjaga nilai budaya dan moral", "Agar orang takut", "Untuk tidur"], c: 1},
-        {q: "Kata 'anonim' dalam ciri cerita rakyat berarti...", a: ["Terkenal", "Tidak diketahui pengarangnya", "Lucu", "Menakutkan"], c: 1},
-        {q: "Legenda sering kali dianggap sebagai cerita yang...", a: ["Murni khayalan", "Pernah terjadi karena ada bukti fisiknya", "Berasal dari planet lain", "Hanya untuk anak-anak"], c: 1},
-        {q: "Tujuan utama cerita rakyat adalah...", a: ["Hiburan dan pendidikan moral", "Menyebarkan hoaks", "Hanya membuang waktu", "Menakut-nakuti"], c: 0},
-        {q: "Perbedaan legenda dan dongeng adalah...", a: ["Legenda pakai hewan, dongeng manusia", "Legenda terikat tempat nyata, dongeng fiktif murni", "Dongeng lebih panjang", "Tidak ada bedanya"], c: 1},
-        {q: "Danau Kaco merupakan legenda yang berasal dari daerah...", a: ["Padang", "Palembang", "Jambi", "Riau"], c: 2}
-    ],
-    2: [
-        {q: "Siapa nama raja yang memimpin Kerajaan Negeri Kerinci?", a: ["Raja Kaco", "Raja Jambi", "Raja Gagak", "Raja Punjung"], c: 2},
-        {q: "Siapa nama putri dari Raja Gagak?", a: ["Putri Pinang Masak", "Putri Napal Melintang", "Putri Jambi", "Putri Kerinci"], c: 1},
-        {q: "Mengapa Putri Napal Melintang tidak pernah melihat wajahnya sendiri?", a: ["Ia buta", "Belum ada cermin dan dilarang ke sungai", "Ia tidak peduli", "Wajahnya selalu ditutupi"], c: 1},
-        {q: "Siapa pangeran pertama yang datang meminang?", a: ["Pangeran Pulau Punjung", "Pangeran Jambi", "Pangeran Kerinci", "Pangeran Jawa"], c: 1},
-        {q: "Apa syarat yang diberikan Raja Gagak kepada pangeran yang meminang?", a: ["Harus sakti", "Menyerahkan harta berharga", "Membawa pasukan", "Menebang hutan"], c: 1},
-        {q: "Setelah Pangeran Jambi, pangeran dari mana lagi yang datang?", a: ["Pangeran Riau", "Pangeran Pulau Punjung", "Pangeran Minang", "Pangeran Palembang"], c: 1},
-        {q: "Apa yang dikatakan Raja Gagak ketika putrinya bertanya tentang asal harta-harta itu?", a: ["Hadiah pinangan", "Hadiah dari sahabat", "Harta karun kerajaan", "Pajak rakyat"], c: 1},
-        {q: "Mengapa Raja Gagak melarikan diri?", a: ["Takut diserang musuh", "Panik dan takut ditagih janji oleh para pangeran", "Ingin berlibur", "Mencari danau baru"], c: 1},
-        {q: "Apa yang dilakukan putri sebelum mengorbankan diri?", a: ["Marah pada ayahnya", "Berdoa", "Meminta izin bercermin di telaga", "Membawa lari harta"], c: 2},
-        {q: "Apa yang membuat Danau Kaco berkilau di malam hari menurut keyakinan masyarakat?", a: ["Lampu di dasar danau", "Emas, permata, dan kecantikan sang Putri", "Ikan ajaib", "Bulan yang jatuh"], c: 1}
-    ],
-    3: [
-        {q: "Tema utama dalam cerita Legenda Danau Kaco adalah...", a: ["Persahabatan", "Keserakahan dan ketamakan", "Perjuangan pahlawan", "Keajaiban hewan"], c: 1},
-        {q: "Di manakah latar tempat kerajaan berdiri?", a: ["Kaki Gunung Kerinci", "Puncak Gunung Kerinci", "Tengah Hutan", "Tepi laut"], c: 0},
-        {q: "Alur yang digunakan dalam cerita tersebut adalah...", a: ["Alur maju", "Alur mundur", "Alur campuran", "Alur kilas balik"], c: 0},
-        {q: "Latar suasana saat Raja Gagak melarikan diri adalah...", a: ["Gembira", "Tegang dan panik", "Damai", "Romantis"], c: 1},
-        {q: "Siapakah tokoh utama yang menjadi pusat konflik?", a: ["Pangeran Jambi", "Raja Gagak", "Rakyat Kerinci", "Pangeran Punjung"], c: 1},
-        {q: "Di manakah latar tempat cerita ini berakhir?", a: ["Istana", "Sungai Kerinci", "Tepi telaga (Danau Kaco)", "Hutan rimba"], c: 2},
-        {q: "Tokoh tritagonis (pendukung) dalam cerita ini adalah...", a: ["Raja Gagak", "Putri Napal", "Para Pangeran", "Danau"], c: 2},
-        {q: "Latar waktu 'Alkisah' menunjukkan bahwa cerita ini terjadi di...", a: ["Masa depan", "Zaman dahulu", "Sekarang", "Besok"], c: 1},
-        {q: "Konflik memuncak (klimaks) saat peristiwa...", a: ["Pangeran Jambi datang", "Putri tenggelam ke dasar telaga", "Raja membohongi putrinya", "Raja mengumpulkan harta"], c: 1},
-        {q: "Pesan yang disampaikan pengarang melalui cerita disebut...", a: ["Tema", "Alur", "Amanat", "Latar"], c: 2}
-    ],
-    4: [
-        {q: "Bagaimana watak Raja Gagak?", a: ["Baik hati dan jujur", "Tamak, serakah, pembohong", "Pemberani", "Penyabar"], c: 1},
-        {q: "Sikap Putri Napal Melintang terhadap ayahnya adalah...", a: ["Melawan", "Acuh tak acuh", "Sangat penurut dan patuh", "Membenci"], c: 2},
-        {q: "Tindakan Raja Gagak menerima pinangan banyak pangeran menunjukkan sifat...", a: ["Cerdas", "Tamak/Maruk", "Diplomatis", "Dermawan"], c: 1},
-        {q: "Meskipun disalahkan oleh ayahnya di tepi telaga, Putri Napal Melintang merespons dengan...", a: ["Balik memarahi ayahnya", "Menangis namun tetap meminta maaf", "Meninggalkan ayahnya", "Membuang harta"], c: 1},
-        {q: "Tokoh yang rela mengorbankan dirinya demi menjaga nama baik ayah dan kerajaannya adalah...", a: ["Pangeran Jambi", "Raja Gagak", "Putri Napal Melintang", "Pangeran Punjung"], c: 2},
-        {q: "Sikap Pangeran Jambi saat diminta syarat harta berharga menunjukkan ia...", a: ["Miskin", "Kaya dan sungguh-sungguh", "Penipu", "Pelit"], c: 1},
-        {q: "Penyesalan Raja Gagak di akhir cerita membuktikan bahwa...", a: ["Harta membawa kebahagiaan abadi", "Harta tidak bisa menggantikan nyawa anaknya", "Ia butuh lebih banyak harta", "Ia harus mencari putri baru"], c: 1},
-        {q: "Apa yang memicu ketamakan Raja Gagak pertama kali?", a: ["Melihat wajah putrinya", "Melihat setumpuk harta berkilau dari Pangeran Jambi", "Diserang musuh", "Kelaparan"], c: 1},
-        {q: "Tokoh antagonis (penyebab masalah) utama di cerita ini adalah...", a: ["Para Pangeran", "Putri Napal Melintang", "Raja Gagak", "Danau Kaco"], c: 2},
-        {q: "Sifat Putri Napal Melintang patut... oleh pembaca.", a: ["Dihindari", "Dicela", "Diteladani (kebaikannya)", "Dilupakan"], c: 2}
-    ],
-    5: [
-        {q: "Konflik awal cerita bermula dari...", a: ["Kecantikan putri yang tersebar", "Kemiskinan raja", "Perang kerajaan", "Bencana alam"], c: 0},
-        {q: "Penyelesaian dari kebohongan Raja Gagak adalah...", a: ["Menikahkan putrinya", "Membagikan harta", "Melarikan diri ke hutan", "Menyerahkan diri"], c: 2},
-        {q: "Amanat terpenting dari cerita ini adalah...", a: ["Carilah harta sebanyak-banyaknya", "Jangan serakah dan berbohong", "Menyelam di telaga itu baik", "Kumpulkan perhiasan"], c: 1},
-        {q: "Akibat langsung dari kebohongan Raja Gagak adalah...", a: ["Ia menjadi raja terbesar", "Ia hidup damai", "Ia panik, takut, dan kehilangan putrinya", "Ia dihormati"], c: 2},
-        {q: "Sikap buruk apa yang harus kita hindari dari Raja Gagak?", a: ["Menyayangi anak", "Keserakahan dan memanfaatkan orang lain", "Istirahat di tepi telaga", "Menyimpan barang"], c: 1},
-        {q: "Mengapa Raja menyalahkan putrinya saat di tepi telaga?", a: ["Karena putrinya nakal", "Karena lelah, takut, dan tidak mau disalahkan", "Karena putrinya menangis", "Karena putrinya jelek"], c: 1},
-        {q: "Apa akhir dari harta karun yang dikumpulkan raja?", a: ["Disimpan di bank", "Dibuang ke dalam telaga", "Dikembalikan ke pangeran", "Diberikan ke rakyat miskin"], c: 1},
-        {q: "Cerita diakhiri dengan suasana...", a: ["Gembira", "Penuh perayaan", "Tragis dan penuh penyesalan", "Lucu"], c: 2},
-        {q: "Tenggelamnya Putri Napal merupakan tahap... dalam alur.", a: ["Pengenalan", "Klimaks (Puncak masalah)", "Resolusi", "Orientasi"], c: 1},
-        {q: "Kebaikan selalu mengalahkan keburukan. Dalam cerita ini keburukan Raja Gagak mendapat...", a: ["Hadiah", "Pujian", "Hukuman dan kesengsaraan", "Mahkota baru"], c: 2}
-    ],
-    6: [
-        {q: "Apa arti kata 'meminang'?", a: ["Membeli", "Melamar untuk dijadikan istri", "Menjual", "Menghias"], c: 1},
-        {q: "Sinonim kata 'tamak' adalah...", a: ["Dermawan", "Serakah", "Jujur", "Pandai"], c: 1},
-        {q: "Apa arti 'pantulan' dalam kalimat 'melihat bayangannya dari pantulan benda'?", a: ["Imbas kembali dari cahaya/cermin", "Lukisan", "Suara", "Benda keras"], c: 0},
-        {q: "Antonim dari kata 'jujur' adalah...", a: ["Tamak", "Bohong/Dusta", "Sabar", "Berani"], c: 1},
-        {q: "Makna kata 'silih berganti' adalah...", a: ["Berhenti", "Secara bergantian/susul-menyusul", "Satu kali saja", "Bersama-sama"], c: 1},
-        {q: "Kalimat 'Raja Gagak sangat kagum melihat banyaknya harta' menggunakan kata kagum yang bersinonim dengan...", a: ["Benci", "Takjub/Terpesona", "Sedih", "Marah"], c: 1},
-        {q: "Apa arti 'meraung-raung'?", a: ["Tertawa terbahak-bahak", "Menangis dengan suara keras", "Bernyanyi", "Berdiam diri"], c: 1},
-        {q: "Kata 'kemakmuran' berasal dari kata dasar...", a: ["Murah", "Makmur", "Umur", "Kurma"], c: 1},
-        {q: "Manakah yang merupakan kalimat tidak langsung?", a: ["'Aku akan pergi,' kata raja.", "Raja berkata bahwa harta itu adalah hadiah dari sahabatnya.", "Putri berkata, 'Maafkan aku ayah.'", "'Tolong aku!' teriaknya."], c: 1},
-        {q: "Kata 'telaga' memiliki arti yang sama dengan...", a: ["Gunung", "Lembah", "Danau kecil", "Samudra"], c: 2}
-    ]
-};
-
-/* =========================================
-   4. LOGIKA APLIKASI UTAMA
-========================================= */
-
-function playSound(type) {
-    if(isMuted) return;
-    const bg = document.getElementById('bg-music');
-    if(type === 'bg' && bg.paused) { bg.volume = 0.3; bg.play().catch(e=>console.log("Audio autoplay prevented")); }
-    if(type === 'correct') { let a = document.getElementById('sfx-correct'); a.currentTime = 0; a.play(); }
-    if(type === 'wrong') { let a = document.getElementById('sfx-wrong'); a.currentTime = 0; a.play(); }
-}
-
-function toggleMute() {
-    isMuted = !isMuted;
-    const icon = document.getElementById('mute-icon');
-    const bg = document.getElementById('bg-music');
-    if(isMuted) {
-        icon.className = 'fas fa-volume-mute text-xl';
-        bg.pause();
-    } else {
-        icon.className = 'fas fa-volume-up text-xl';
-        bg.play();
-    }
-}
-
-function showLoading(show, text="Menyimpan Petualangan...") {
-    document.getElementById('loading-text').innerText = text;
-    document.getElementById('loading').style.display = show ? 'flex' : 'none';
-}
-
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
-    playSound('bg');
-}
-
-/* --- API CALLS & OFFLINE FALLBACK --- */
-async function callAPI(action, data = {}) {
-    try {
-        const payload = { action, ...data };
-        
-        // Membatasi waktu tunggu API maksimal 3 detik agar tidak macet
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        return await res.json();
-    } catch(e) {
-        console.warn("Koneksi API Gagal, mengalihkan ke mode Offline.", e);
-        return {status: "offline_fallback"};
-    }
-}
-
-async function login() {
-    const nama = document.getElementById('login-nama').value.trim();
-    const kelas = document.getElementById('login-kelas').value;
-    if(!nama) return alert("Silakan masukkan nama lengkap kamu!");
-    
-    showLoading(true, "Membuka Gerbang...");
-    const res = await callAPI("login", {nama, kelas});
-    showLoading(false);
-    
-    // SISTEM HYBRID: Jika API sukses gunakan data API, jika gagal gunakan Local Storage
-    if(res.status === "success") {
-        currentUser = res.data;
-        // Simpan cadangan ke perangkat
-        localStorage.setItem("danaukaco_user_" + nama, JSON.stringify(currentUser));
-    } else {
-        // --- MODE OFFLINE AKTIF ---
-        let savedData = localStorage.getItem("danaukaco_user_" + nama);
-        if(savedData) {
-            currentUser = JSON.parse(savedData);
-        } else {
-            currentUser = { 
-                id: Date.now().toString(), 
-                nama: nama, 
-                kelas: kelas, 
-                bintang: 0, 
-                skor: 0, 
-                level: 1 
-            };
-        }
-        // Simpan state baru ke perangkat
-        localStorage.setItem("danaukaco_user_" + nama, JSON.stringify(currentUser));
-        // Munculkan notifikasi kecil (opsional) agar guru tahu sedang mode offline
-        console.log("Memasuki Mode Offline. Progress disimpan di perangkat.");
-    }
-    
-    updateDashboardInfo();
-    showScreen('screen-dashboard');
-}
-
-function logout() {
-    currentUser = null;
-    document.getElementById('login-nama').value = '';
-    showScreen('screen-login');
-}
-
-function updateDashboardInfo() {
-    document.getElementById('dash-nama').innerText = currentUser.nama;
-    document.getElementById('dash-kelas').innerText = currentUser.kelas;
-    document.getElementById('dash-bintang').innerText = currentUser.bintang;
-    document.getElementById('dash-level').innerText = "Lv " + currentUser.level;
-}
-
-/* --- MATERI & KUIS --- */
-function openMateri(id) {
-    currentModule = id;
-    const materi = MATERI_DATA[id];
-    document.getElementById('materi-container').innerHTML = `
-        <h2 class="font-heading text-3xl text-teal-800 mb-6 text-center">${materi.title}</h2>
-        ${materi.content}
-    `;
-    document.getElementById('btn-kuis').classList.remove('hidden');
-    document.getElementById('btn-kuis').onclick = () => startQuiz(id);
-    showScreen('screen-materi');
-}
-
-function startQuiz(id) {
-    currentModule = id;
-    currentQuiz = [...QUIZ_DATA[id]].sort(() => Math.random() - 0.5); // Shuffle
-    currentQIndex = 0;
-    score = 0;
-    correctAns = 0;
-    showScreen('screen-kuis');
-    renderQuestion();
-}
-
-function renderQuestion() {
-    if(currentQIndex >= currentQuiz.length) {
-        finishQuiz();
-        return;
-    }
-    
-    document.getElementById('kuis-progress').innerText = `Soal ${currentQIndex + 1}/${currentQuiz.length}`;
-    document.getElementById('kuis-skor-live').innerHTML = `<i class="fas fa-star"></i> Skor: ${score}`;
-    
-    const q = currentQuiz[currentQIndex];
-    document.getElementById('kuis-soal').innerText = q.q;
-    
-    const opsHtml = q.a.map((opt, idx) => `
-        <button onclick="answerQuiz(${idx}, ${q.c})" class="w-full text-left p-4 rounded-xl border-2 border-teal-200 bg-white hover:bg-teal-50 hover:border-teal-400 transition font-bold text-gray-700 shadow-sm">
-            ${['A','B','C','D'][idx]}. ${opt}
-        </button>
-    `).join('');
-    
-    document.getElementById('kuis-opsi').innerHTML = opsHtml;
-}
-
-function answerQuiz(selected, correct) {
-    const isCorrect = selected === correct;
-    if(isCorrect) {
-        playSound('correct');
-        score += 10;
-        correctAns++;
-        showFeedback(true);
-    } else {
-        playSound('wrong');
-        showFeedback(false, currentQuiz[currentQIndex].a[correct]);
-    }
-    
-    setTimeout(() => {
-        currentQIndex++;
-        renderQuestion();
-    }, 1500);
-}
-
-function showFeedback(isCorrect, rightAnswerText = "") {
-    const div = document.createElement('div');
-    div.className = `fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-6 rounded-2xl text-white font-bold text-2xl z-50 text-center shadow-2xl ${isCorrect ? 'bg-green-500' : 'bg-red-500'}`;
-    div.innerHTML = isCorrect ? `<i class="fas fa-check-circle fa-2x mb-2"></i><br>BENAR! +10 Poin` : `<i class="fas fa-times-circle fa-2x mb-2"></i><br>SALAH!<br><span class="text-sm mt-2 block">Jawaban: ${rightAnswerText}</span>`;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 1400);
-}
-
-async function finishQuiz() {
-    showLoading(true, "Menyimpan Nilai...");
-    const res = await callAPI("saveQuiz", {
-        id: currentUser.id, nama: currentUser.nama, kelas: currentUser.kelas,
-        materi: "Materi " + currentModule, skor: score, benar: correctAns, salah: 10 - correctAns, waktu: 0
-    });
-    showLoading(false);
-    
-    // Update data lokal terlepas API sukses atau gagal
-    currentUser.skor += score;
-    currentUser.bintang += Math.floor(score/20);
-    currentUser.level = Math.floor(currentUser.skor / 100) + 1; // Naik 1 level tiap 100 poin
-    
-    // Simpan ke memori HP/Laptop
-    localStorage.setItem("danaukaco_user_" + currentUser.nama, JSON.stringify(currentUser));
-    
-    updateDashboardInfo();
-    
-    document.getElementById('materi-container').innerHTML = `
-        <div class="text-center">
-            <i class="fas fa-trophy fa-4x text-yellow-500 mb-4"></i>
-            <h2 class="font-heading text-3xl text-teal-800 mb-2">Kuis Selesai!</h2>
-            <p class="text-xl">Skor Kamu: <span class="font-bold text-blue-600">${score}</span> / 100</p>
-            <p class="text-lg">Jawaban Benar: ${correctAns}</p>
-            <button onclick="showScreen('screen-dashboard')" class="btn-game mt-6 px-6 py-3">Kembali ke Peta</button>
-        </div>
-    `;
-    document.getElementById('btn-kuis').classList.add('hidden');
-    showScreen('screen-materi');
-}
-
-// Text to Speech
-function readAloud() {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const text = document.getElementById('story-reader').innerText;
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'id-ID';
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
-    } else {
-        alert("Browser Anda tidak mendukung fitur suara narasi.");
-    }
-}
-
-/* =========================================
-   5. LOGIKA 8 PERMAINAN EDUKASI
-========================================= */
-const gameContainer = document.getElementById('game-container');
-
-function openGame(gameId) {
-    showScreen('screen-game');
-    gameContainer.innerHTML = '';
-    
-    if(gameId === 1) renderGame1();
-    else if(gameId === 2) renderGame2();
-    else if(gameId === 3) renderGame3();
-    else if(gameId === 4) renderGame4();
-    else if(gameId === 5) renderGame5();
-    else if(gameId === 6) renderGame6();
-    else if(gameId === 7) renderGame7();
-    else if(gameId === 8) renderGame8();
-}
-
-async function finishGame(gameName) {
-    playSound('correct');
-    gameContainer.innerHTML = `
-        <div class="text-center">
-            <i class="fas fa-award fa-5x text-yellow-500 mb-4 floating"></i>
-            <h2 class="font-heading text-3xl text-teal-800">Hebat! Kamu Menyelesaikan</h2>
-            <p class="text-xl font-bold text-orange-500 mb-4">${gameName}</p>
-            <p>Mendapatkan +1 Bintang <i class="fas fa-star text-yellow-500"></i></p>
-            <button onclick="showScreen('screen-dashboard')" class="btn-game mt-6 px-6 py-3">Kembali</button>
-        </div>
-    `;
-    
-    // Panggil API di background
-    callAPI("saveGame", { id: currentUser.id, nama: currentUser.nama, kelas: currentUser.kelas, game: gameName, status: "Selesai" });
-    
-    // Langsung update state lokal agar UI cepat & tetap tersimpan
-    currentUser.bintang += 1;
-    localStorage.setItem("danaukaco_user_" + currentUser.nama, JSON.stringify(currentUser));
-    
-    updateDashboardInfo();
-}
-
-// GAME 1: PETUALANGAN
-function renderGame1() {
-    let step = 0;
-    const questions = [
-        { q: "Di gunung mana kerajaan Raja Gagak berada?", a: "Kerinci", w: "Merapi" },
-        { q: "Siapa nama putri Raja Gagak?", a: "Napal Melintang", w: "Pinang Masak" },
-        { q: "Ke mana putri tenggelam?", a: "Danau Kaco", w: "Sungai" }
-    ];
-    
-    const renderStep = () => {
-        if(step >= questions.length) return finishGame("Petualangan Mencari Harta");
-        gameContainer.innerHTML = `
-            <h2 class="font-heading text-2xl mb-4">Pos Petualangan ${step+1}/3</h2>
-            <div class="w-full bg-gray-200 h-4 rounded-full mb-6 overflow-hidden"><div class="bg-green-500 h-full w-${(step/3)*100}"></div></div>
-            <img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=400&h=200" class="rounded-xl mb-4 shadow">
-            <p class="text-xl font-bold text-center mb-6">${questions[step].q}</p>
-            <div class="flex gap-4">
-                <button onclick="handleG1(true)" class="btn-game flex-1 p-4">${questions[step].a}</button>
-                <button onclick="handleG1(false)" class="btn-game flex-1 p-4">${questions[step].w}</button>
-            </div>
-        `;
-    };
-    
-    window.handleG1 = (correct) => {
-        if(correct) { playSound('correct'); step++; renderStep(); }
-        else { playSound('wrong'); alert('Jawaban salah! Jalan tertutup.'); }
-    };
-    renderStep();
-}
-
-// GAME 2: SUSUN CERITA
-function renderGame2() {
-    const events = [
-        "1. Putri tumbuh menjadi gadis yang sangat cantik.",
-        "2. Pangeran Jambi dan Punjung datang membawa harta.",
-        "3. Raja Gagak tamak dan melarikan diri membawa putri.",
-        "4. Putri tenggelam dan menjadi Danau Kaco."
-    ];
-    let shuffled = [...events].sort(() => Math.random() - 0.5);
-    let selectedOrder = [];
-    
-    const renderBox = () => {
-        if(selectedOrder.length === 4) {
-            if(selectedOrder.join('') === events.join('')) finishGame("Susun Cerita");
-            else { playSound('wrong'); alert("Urutan salah, coba lagi!"); selectedOrder=[]; renderBox(); }
-            return;
-        }
-        gameContainer.innerHTML = `
-            <h2 class="font-heading text-2xl mb-4">Susun Peristiwa (Klik Sesuai Urutan)</h2>
-            <div class="flex flex-col gap-3 w-full max-w-md">
-                ${shuffled.map((ev, i) => selectedOrder.includes(ev) ? '' : `<button onclick="handleG2('${ev}')" class="p-4 bg-white border-2 border-blue-400 rounded-xl font-bold shadow text-left">${ev.substring(3)}</button>`).join('')}
-            </div>
-            <div class="mt-8 p-4 bg-blue-50 rounded-xl min-h-[100px] w-full max-w-md border-dashed border-2 border-blue-300">
-                <p class="text-sm text-gray-500 mb-2">Urutan yang kamu pilih:</p>
-                ${selectedOrder.map((ev, i) => `<div class="p-2 bg-blue-200 mb-2 rounded font-bold">${i+1}. ${ev.substring(3)}</div>`).join('')}
-            </div>
-            <button onclick="renderGame2()" class="mt-4 text-red-500 underline"><i class="fas fa-undo"></i> Ulang</button>
-        `;
-    };
-    window.handleG2 = (ev) => { playSound('correct'); selectedOrder.push(ev); renderBox(); };
-    renderBox();
-}
-
-// GAME 3: TEBAK TOKOH
-function renderGame3() {
-    gameContainer.innerHTML = `
-        <h2 class="font-heading text-2xl mb-4">Tebak Tokoh</h2>
-        <div class="w-32 h-32 bg-gray-800 text-white rounded-full flex items-center justify-center text-5xl shadow-xl border-4 border-yellow-400 mb-6">
-            <i class="fas fa-user-secret"></i>
-        </div>
-        <p class="text-xl font-bold text-center mb-6 text-gray-700 bg-white p-4 rounded-xl border border-gray-200">"Aku sangat menyayangi ayahku dan rela berkorban menjaga nama baik kerajaanku dengan tenggelam ke dasar telaga. Siapakah aku?"</p>
-        <div class="flex flex-col gap-3 w-full max-w-md">
-            <button onclick="handleG3(false)" class="p-3 bg-red-100 border-2 border-red-300 rounded font-bold hover:bg-red-200">Raja Gagak</button>
-            <button onclick="handleG3(true)" class="p-3 bg-blue-100 border-2 border-blue-300 rounded font-bold hover:bg-blue-200">Putri Napal Melintang</button>
-            <button onclick="handleG3(false)" class="p-3 bg-green-100 border-2 border-green-300 rounded font-bold hover:bg-green-200">Pangeran Jambi</button>
-        </div>
-    `;
-    window.handleG3 = (correct) => {
-        if(correct) finishGame("Tebak Tokoh");
-        else { playSound('wrong'); alert("Salah! Coba lagi."); }
-    }
-}
-
-// GAME 4: PASANGKAN PASANGAN (Memory/Match)
-function renderGame4() {
-    const pairs = [ {id:1, text:"Raja Gagak"}, {id:1, text:"Tamak & Serakah"}, {id:2, text:"Putri Napal"}, {id:2, text:"Baik & Rela Berkorban"}, {id:3, text:"Danau Kaco"}, {id:3, text:"Telaga Berkilau"} ];
-    let cards = pairs.sort(() => Math.random() - 0.5);
-    let flipped = [];
-    let matched = 0;
-    
-    window.handleG4 = (idx) => {
-        const card = document.getElementById(`c-${idx}`);
-        if(card.classList.contains('flipped') || flipped.length === 2) return;
-        card.classList.add('flipped');
-        flipped.push({idx, id: cards[idx].id});
-        
-        if(flipped.length === 2) {
-            if(flipped[0].id === flipped[1].id) {
-                playSound('correct');
-                matched++;
-                flipped = [];
-                if(matched === 3) setTimeout(() => finishGame("Pasangkan"), 1000);
-            } else {
-                playSound('wrong');
-                setTimeout(() => {
-                    document.getElementById(`c-${flipped[0].idx}`).classList.remove('flipped');
-                    document.getElementById(`c-${flipped[1].idx}`).classList.remove('flipped');
-                    flipped = [];
-                }, 1000);
+            if (type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             }
         }
-    }
-    
-    let html = `<h2 class="font-heading text-2xl mb-4 w-full text-center">Pasangkan (Watak/Tempat)</h2><div class="grid grid-cols-2 gap-4 w-full max-w-md">`;
-    cards.forEach((c, i) => {
-        html += `<div class="card-match" id="c-${i}" onclick="handleG4(${i})">
-            <div class="card-inner">
-                <div class="card-front"><i class="fas fa-question text-3xl"></i></div>
-                <div class="card-back">${c.text}</div>
-            </div>
-        </div>`;
-    });
-    html += `</div>`;
-    gameContainer.innerHTML = html;
-}
+    </script>
 
-// GAME 5: LABIRIN DANAU KACO (Simplified Grid)
-function renderGame5() {
-    let p = 0; // Player pos (0 to 8 on 3x3 grid)
-    const exit = 8;
-    const questions = {
-        1: {q: "Raja Gagak baik hati?", a:false},
-        3: {q: "Putri tenggelam ke telaga?", a:true},
-        5: {q: "Pangeran Jambi bawa harta?", a:true},
-        7: {q: "Danau Kaco ada di Jawa?", a:false}
-    };
-    
-    const drawMaze = () => {
-        if(p === exit) return finishGame("Labirin Danau Kaco");
-        let html = `<h2 class="font-heading text-2xl mb-4">Labirin Danau Kaco</h2><div class="grid grid-cols-3 gap-2 bg-teal-800 p-4 rounded-xl border-4 border-teal-900 shadow-xl">`;
-        for(let i=0; i<9; i++) {
-            let content = "";
-            if(i === p) content = `<div class="maze-player w-full h-full"></div>`;
-            else if(i === exit) content = `<i class="fas fa-water text-blue-300"></i>`;
-            else if(questions[i]) content = `<i class="fas fa-question-circle text-yellow-300"></i>`;
-            html += `<div class="w-16 h-16 bg-teal-600 rounded flex items-center justify-center border-2 border-teal-500">${content}</div>`;
-        }
-        html += `</div><div class="mt-6 flex gap-4">
-            <button onclick="moveMaze(-1)" class="btn-game p-4"><i class="fas fa-arrow-left"></i></button>
-            <button onclick="moveMaze(1)" class="btn-game p-4"><i class="fas fa-arrow-right"></i></button>
-            <button onclick="moveMaze(3)" class="btn-game p-4"><i class="fas fa-arrow-down"></i></button>
-        </div>`;
-        gameContainer.innerHTML = html;
-    };
-    
-    window.moveMaze = (dir) => {
-        let newP = p + dir;
-        if(newP < 0 || newP > 8 || (p%3===2 && dir===1) || (p%3===0 && dir===-1)) return; // bounds check
-        
-        if(questions[newP]) {
-            let ans = confirm(`Pertanyaan Labirin: ${questions[newP].q}\n\n[OK = BENAR]  [Cancel = SALAH]`);
-            if(ans !== questions[newP].a) { playSound('wrong'); alert("Salah! Tidak bisa lewat."); return; }
-            playSound('correct');
-            delete questions[newP];
-        }
-        p = newP;
-        drawMaze();
-    };
-    drawMaze();
-}
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full font-bold shadow-lg z-50 transition-opacity duration-300 opacity-0 pointer-events-none">
+        Pesan Notifikasi
+    </div>
 
-// GAME 6: BENAR ATAU SALAH
-function renderGame6() {
-    const stmts = [
-        { s: "Raja Gagak menerima lamaran dua pangeran.", a: true },
-        { s: "Danau Kaco bercahaya karena sihir penyihir.", a: false },
-        { s: "Putri Napal Melintang memohon maaf di tepi telaga.", a: true },
-        { s: "Raja Gagak mengembalikan semua harta pada pangeran.", a: false }
-    ];
-    let idx = 0;
-    
-    const showStmt = () => {
-        if(idx >= stmts.length) return finishGame("Benar atau Salah");
-        gameContainer.innerHTML = `
-            <h2 class="font-heading text-2xl mb-4">Benar atau Salah (${idx+1}/4)</h2>
-            <div class="bg-white p-8 rounded-2xl shadow-lg border-2 border-indigo-200 text-center w-full max-w-md">
-                <p class="text-xl font-bold text-gray-800 mb-8">"${stmts[idx].s}"</p>
-                <div class="flex gap-4">
-                    <button onclick="handleG6(true)" class="flex-1 bg-green-500 text-white p-4 rounded-xl font-bold text-xl hover:bg-green-600 shadow"><i class="fas fa-check"></i> BENAR</button>
-                    <button onclick="handleG6(false)" class="flex-1 bg-red-500 text-white p-4 rounded-xl font-bold text-xl hover:bg-red-600 shadow"><i class="fas fa-times"></i> SALAH</button>
-                </div>
+    <!-- 1. LOGIN SCREEN -->
+    <div id="screen-login" class="min-h-screen flex flex-col items-center justify-center bg-blue-900 bg-[url('https://placehold.co/1920x1080/1e3a8a/3b82f6?text=Danau+Kaco+Hutan+Tropis')] bg-cover bg-blend-overlay text-white p-4 relative z-10">
+        <div class="glass-panel text-center p-8 max-w-md w-full animate-pop">
+            <div class="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-yellow-400 shadow-lg">
+                <span class="text-4xl">📖</span>
             </div>
-        `;
-    };
-    window.handleG6 = (ans) => {
-        if(ans === stmts[idx].a) { playSound('correct'); idx++; showStmt(); }
-        else { playSound('wrong'); alert("Oops, Salah! Perhatikan ceritanya lagi."); }
-    };
-    showStmt();
-}
-
-// GAME 7: TEBAK KATA RAHASIA
-function renderGame7() {
-    const word = "TAMAK";
-    let scrambled = "MKATA";
-    let guessed = "";
-    
-    const draw = () => {
-        if(guessed === word) return finishGame("Tebak Kata Rahasia");
-        let html = `
-            <h2 class="font-heading text-2xl mb-4">Susun Kata (Sifat Raja Gagak)</h2>
-            <div class="flex gap-2 mb-8">
-                ${[0,1,2,3,4].map(i => `<div class="w-12 h-12 border-b-4 border-teal-600 flex items-center justify-center text-3xl font-bold uppercase">${guessed[i]||'_'}</div>`).join('')}
+            <h1 class="font-heading text-3xl text-blue-900 mb-2">Petualangan Literasi</h1>
+            <h2 class="font-bold text-xl text-blue-700 mb-6">Legenda Danau Kaco</h2>
+            
+            <!-- ATURAN MUTLAK LOGIN -->
+            <div class="mb-4">
+                <input type="text" id="input-nama" placeholder="Masukkan Nama Lengkapmu..." class="w-full text-center px-4 py-3 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:outline-none text-gray-800 font-bold text-lg shadow-inner">
             </div>
-            <div class="flex gap-2">
-                ${scrambled.split('').map((c, i) => `<button onclick="handleG7('${c}', ${i})" id="l-${i}" class="w-12 h-12 bg-yellow-400 rounded shadow font-bold text-xl hover:bg-yellow-500">${c}</button>`).join('')}
-            </div>
-            <button onclick="guessed=''; draw();" class="mt-8 text-red-500 underline">Ulangi</button>
-        `;
-        gameContainer.innerHTML = html;
-    };
-    window.handleG7 = (char, i) => {
-        playSound('correct');
-        guessed += char;
-        draw();
-    };
-    draw();
-}
-
-// GAME 8: BOSS KUIS RAJA GAGAK
-function renderGame8() {
-    let bossHp = 100;
-    let playerHp = 100;
-    const qs = [
-        {q: "Apa hukuman untuk Raja Gagak pada akhirnya?", a: "Kehilangan putri & harta", w: "Dipenjara"},
-        {q: "Siapa yang paling dirugikan akibat sifat tamak?", a: "Diri sendiri", w: "Orang lain saja"}
-    ];
-    let qIdx = 0;
-    
-    const drawFight = () => {
-        if(bossHp <= 0) return finishGame("Bos Raja Gagak Ditaklukkan!");
-        if(playerHp <= 0) { alert("Kamu Kalah! Coba lagi."); openGame(8); return; }
-        
-        let q = qs[qIdx % qs.length];
-        
-        gameContainer.innerHTML = `
-            <h2 class="font-heading text-2xl mb-4 text-red-600"><i class="fas fa-dragon"></i> Pertarungan Bos!</h2>
-            <div class="flex justify-between w-full max-w-lg mb-8">
-                <div class="text-center w-1/3">
-                    <i class="fas fa-user-astronaut fa-3x text-teal-600 mb-2"></i>
-                    <div class="w-full bg-gray-200 h-3 rounded"><div class="bg-green-500 h-full rounded" style="width:${playerHp}%"></div></div>
-                    <p class="font-bold">Kamu (${playerHp})</p>
-                </div>
-                <div class="text-center text-3xl font-bold text-red-500 self-center">VS</div>
-                <div class="text-center w-1/3">
-                    <i class="fas fa-crown fa-3x text-yellow-600 mb-2"></i>
-                    <div class="w-full bg-gray-200 h-3 rounded"><div class="bg-red-500 h-full rounded" style="width:${bossHp}%"></div></div>
-                    <p class="font-bold">Raja Gagak (${bossHp})</p>
-                </div>
+            <div class="bg-blue-600 text-white font-black text-xl py-2 px-4 rounded-lg mb-6 inline-block shadow-md">
+                KELAS 6
             </div>
             
-            <div class="bg-white p-6 rounded-xl shadow w-full max-w-lg text-center">
-                <p class="text-lg font-bold mb-4">${q.q}</p>
-                <div class="flex flex-col gap-2">
-                    <button onclick="atk(true)" class="bg-red-500 text-white p-3 rounded font-bold shadow hover:bg-red-600">SERANG: ${q.a}</button>
-                    <button onclick="atk(false)" class="bg-gray-200 text-gray-800 p-3 rounded font-bold shadow hover:bg-gray-300">${q.w}</button>
+            <button onclick="handleLogin()" class="w-full btn-bounce bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-heading text-xl py-4 rounded-xl shadow-3d mb-2">
+                MULAI PETUALANGAN!
+            </button>
+            <div id="login-loader" class="hide mt-4">
+                <div class="loader"></div>
+                <p class="text-blue-800 mt-2 font-bold">Mempersiapkan petualanganmu...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. DASHBOARD SCREEN -->
+    <div id="screen-dashboard" class="hide min-h-screen bg-adventure relative p-4 pb-24">
+        <!-- Header / Player Info -->
+        <div class="glass-panel flex justify-between items-center p-4 mb-6 sticky top-4 z-40">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white font-bold text-xl">👤</div>
+                <div>
+                    <h3 id="dash-nama" class="font-bold text-blue-900 leading-tight">Nama Siswa</h3>
+                    <p class="text-sm font-bold text-gray-600">Kelas 6 | <span id="dash-xp" class="text-yellow-600">0 XP</span></p>
                 </div>
             </div>
-        `;
-    };
-    
-    window.atk = (correct) => {
-        if(correct) { playSound('correct'); bossHp -= 50; }
-        else { playSound('wrong'); playerHp -= 50; }
-        qIdx++;
-        drawFight();
-    };
-    drawFight();
-}
+            <div class="flex gap-3">
+                <button onclick="showScreen('screen-teacher')" class="bg-purple-600 text-white px-3 py-1 rounded-lg font-bold text-sm btn-bounce">Guru</button>
+                <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm btn-bounce">Keluar</button>
+            </div>
+        </div>
 
-/* =========================================
-   6. LOGIKA DASHBOARD GURU
-========================================= */
-function loginTeacher() {
-    const pin = document.getElementById('teacher-pin').value;
-    if(pin === '1234') { // Simple PIN for demo purposes (real app uses backend auth)
-        showScreen('screen-teacher-dash');
-        loadTeacherData();
-    } else {
-        alert("PIN Salah!");
-    }
-}
+        <div class="max-w-4xl mx-auto">
+            <h2 class="font-heading text-3xl text-white text-center mb-8 drop-shadow-md">Peta Petualangan</h2>
+            
+            <!-- Map Paths -->
+            <div class="flex flex-col items-center gap-8 relative">
+                <!-- Pos 1 -->
+                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.1s;">
+                    <div onclick="openMaterial(1)" class="map-node node-active btn-bounce">1</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Mengenal Cerita Rakyat</div>
+                </div>
+                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
+                <!-- Pos 2 -->
+                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.2s;">
+                    <div onclick="openMaterial(2)" class="map-node node-locked btn-bounce" id="node-2">2</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Legenda Danau Kaco</div>
+                </div>
+                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
+                <!-- Pos 3 -->
+                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.3s;">
+                    <div onclick="openMaterial(3)" class="map-node node-locked btn-bounce" id="node-3">3</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Unsur Intrinsik Cerita</div>
+                </div>
+                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
+                <!-- Pos 4 -->
+                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.4s;">
+                    <div onclick="openMaterial(4)" class="map-node node-locked btn-bounce" id="node-4">4</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Tokoh & Penokohan</div>
+                </div>
+                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
+                <!-- Pos 5 -->
+                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.5s;">
+                    <div onclick="openMaterial(5)" class="map-node node-locked btn-bounce" id="node-5">5</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Alur & Amanat</div>
+                </div>
+                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
+                <!-- Pos 6 -->
+                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.6s;">
+                    <div onclick="openMaterial(6)" class="map-node node-locked btn-bounce" id="node-6">6</div>
+                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Kosakata & Pemahaman</div>
+                </div>
+            </div>
 
-async function loadTeacherData() {
-    document.getElementById('teacher-data-table').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
-    const res = await callAPI("getTeacherDashboard");
-    if(res.status === "success") {
-        let html = '<h3 class="font-bold text-lg mb-2 mt-4">Data Nilai Siswa (Kuis)</h3>';
-        html += '<table class="w-full text-sm text-left border-collapse border border-gray-300"> <tr class="bg-teal-600 text-white"> <th class="p-2 border">Nama</th> <th class="p-2 border">Kelas</th> <th class="p-2 border">Materi</th> <th class="p-2 border">Skor</th> <th class="p-2 border">Tanggal</th> </tr>';
+            <!-- Games Section -->
+            <div class="mt-12 glass-panel p-6">
+                <h3 class="font-heading text-2xl text-blue-800 mb-4 text-center">Zona Bermain (8 Game Seru!)</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="openGame(1)" class="bg-yellow-400 text-yellow-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">1. Petualangan</button>
+                    <button onclick="openGame(2)" class="bg-green-400 text-green-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">2. Susun Cerita</button>
+                    <button onclick="openGame(3)" class="bg-blue-400 text-blue-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">3. Tebak Tokoh</button>
+                    <button onclick="openGame(4)" class="bg-purple-400 text-purple-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">4. Pasangan</button>
+                    <button onclick="openGame(5)" class="bg-pink-400 text-pink-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">5. Labirin</button>
+                    <button onclick="openGame(6)" class="bg-orange-400 text-orange-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">6. Benar/Salah</button>
+                    <button onclick="openGame(7)" class="bg-teal-400 text-teal-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">7. Kata Rahasia</button>
+                    <button onclick="openGame(8)" class="bg-red-500 text-white font-bold p-4 rounded-xl shadow-3d btn-bounce">8. Kuis Boss</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MATERIAL SCREEN -->
+    <div id="screen-material" class="hide min-h-screen bg-white p-4">
+        <div class="max-w-3xl mx-auto">
+            <button onclick="showScreen('screen-dashboard')" class="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-bounce">⬅ Kembali ke Peta</button>
+            <div id="material-content" class="bg-white rounded-2xl shadow-lg p-6 lg:p-10 border border-blue-100">
+                <!-- Content Injected via JS -->
+            </div>
+            
+            <div class="mt-8 flex justify-between items-center border-t pt-6">
+                <button onclick="startQuiz()" class="w-full bg-green-500 hover:bg-green-600 text-white font-heading text-xl py-4 rounded-xl shadow-3d btn-bounce animate-pulse">
+                    MULAI KUIS MATERI INI (10 SOAL)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. QUIZ SCREEN -->
+    <div id="screen-quiz" class="hide min-h-screen bg-blue-900 p-4 flex flex-col items-center justify-center">
+        <div class="max-w-2xl w-full glass-panel p-8">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="font-heading text-xl text-blue-800">Kuis Pengetahuan</h3>
+                <div class="bg-blue-100 text-blue-800 font-bold px-4 py-2 rounded-full">Soal: <span id="quiz-progress">1/10</span></div>
+            </div>
+            
+            <div id="quiz-question" class="text-2xl font-bold text-gray-800 mb-8 text-center leading-relaxed">
+                Pertanyaan akan muncul di sini?
+            </div>
+            
+            <div id="quiz-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Options Injected via JS -->
+            </div>
+            
+            <div id="quiz-feedback" class="mt-6 p-4 rounded-lg font-bold text-center hide"></div>
+            
+            <button id="quiz-next-btn" onclick="nextQuestion()" class="hide w-full mt-6 bg-blue-500 text-white font-bold py-3 rounded-xl shadow-3d btn-bounce">Soal Selanjutnya ➡</button>
+        </div>
+    </div>
+
+    <!-- 5. GAMES SCREEN -->
+    <div id="screen-game" class="hide min-h-screen bg-green-900 p-4 flex flex-col items-center">
+        <div class="w-full max-w-4xl flex justify-between mb-4">
+            <button onclick="showScreen('screen-dashboard')" class="bg-white text-green-900 font-bold py-2 px-4 rounded-lg btn-bounce shadow">⬅ Keluar Game</button>
+            <div class="bg-yellow-400 text-yellow-900 font-bold py-2 px-6 rounded-full shadow border-2 border-white">
+                Skor: <span id="game-score">0</span>
+            </div>
+        </div>
         
-        res.data.nilai.reverse().forEach(row => { // Reverse to show latest first
-            html += `<tr> <td class="p-2 border">${row[1]}</td> <td class="p-2 border">${row[2]}</td> <td class="p-2 border">${row[3]}</td> <td class="p-2 border font-bold text-teal-700">${row[4]}</td> <td class="p-2 border text-xs">${new Date(row[8]).toLocaleDateString()}</td> </tr>`;
-        });
-        html += '</table>';
+        <div id="game-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-6 min-h-[60vh] border-8 border-green-700 relative overflow-hidden">
+            <!-- Game Canvas / UI Injected here -->
+        </div>
+    </div>
+
+    <!-- 6. TEACHER DASHBOARD -->
+    <div id="screen-teacher" class="hide min-h-screen bg-gray-100 p-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="font-heading text-3xl text-purple-800">Dashboard Guru Kelas 6</h2>
+                <button onclick="showScreen('screen-dashboard')" class="bg-gray-800 text-white px-4 py-2 rounded-lg btn-bounce">Tutup</button>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-purple-100 text-purple-900">
+                            <th class="p-3 border">Nama Siswa</th>
+                            <th class="p-3 border">Mat 1</th>
+                            <th class="p-3 border">Mat 2</th>
+                            <th class="p-3 border">Mat 3</th>
+                            <th class="p-3 border">Mat 4</th>
+                            <th class="p-3 border">Mat 5</th>
+                            <th class="p-3 border">Mat 6</th>
+                            <th class="p-3 border">Total XP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-table-body">
+                        <!-- Data dari API -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /** =========================================================================
+         * DATA MATERI PEMBELAJARAN (DIAMBIL DARI SUMBER GAMBAR SESUAI PERINTAH)
+         * ========================================================================= */
+        const materiData = {
+            1: {
+                title: "Mengenal Cerita Rakyat dan Legenda",
+                content: `
+                    <img src="https://placehold.co/800x400/1e3a8a/ffffff?text=Cerita+Rakyat+Indonesia" class="w-full rounded-xl mb-6 shadow-md" alt="Cerita Rakyat">
+                    <h3 class="text-2xl font-bold text-blue-800 mb-4">Apa itu Cerita Rakyat?</h3>
+                    <p class="mb-4 text-lg">Cerita rakyat adalah cerita yang berasal dari masyarakat dan berkembang dalam masyarakat pada masa lampau yang menjadi ciri khas setiap bangsa yang memiliki kultur budaya yang beraneka ragam.</p>
+                    <p class="mb-4 text-lg"><strong>Legenda</strong> adalah cerita rakyat pada zaman dahulu yang ada hubungannya dengan peristiwa sejarah, menceritakan asal usul suatu tempat, benda, atau kejadian alam. Contohnya: Legenda Danau Toba, Legenda Tangkuban Perahu, dan <strong>Legenda Danau Kaco</strong>.</p>
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 my-6">
+                        <h4 class="font-bold text-blue-800 mb-2">Ciri-ciri Cerita Rakyat:</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Disampaikan secara lisan turun-temurun.</li>
+                            <li>Tidak diketahui secara pasti siapa pengarangnya (Anonim).</li>
+                            <li>Kaya akan nilai-nilai luhur dan pesan moral.</li>
+                            <li>Bersifat tradisional.</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-bold text-gray-800 mb-2">Video Pembelajaran:</h4>
+                        <iframe class="w-full h-64 md:h-96 rounded-xl" src="https://www.youtube.com/embed/aE1fQ1w4qP4" title="Pengertian Cerita Rakyat" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                `
+            },
+            2: {
+                title: "Membaca Cerita Legenda Danau Kaco",
+                content: `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-bold">Sumber Asli Buku Pelajaran</span>
+                        <button onclick="readAloud()" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold btn-bounce flex items-center gap-2">
+                            <span>🔊</span> Bacakan Cerita
+                        </button>
+                    </div>
+                    
+                    <div id="story-text" class="text-lg leading-loose space-y-6 text-gray-800 text-justify">
+                        <img src="https://placehold.co/800x400/065f46/ffffff?text=Kerajaan+di+Kaki+Gunung+Kerinci" class="w-full rounded-xl shadow" alt="Kerajaan">
+                        <p>Alkisah di daerah kaki Gunung Kerinci berdiri sebuah kerajaan yang dipimpin Raja Gagak. Ia memiliki seorang putri cantik bernama Putri Napal Melintang yang sangat disayanginya. Sejak kecil, semua keinginan sang putri selalu dipenuhi.</p>
+                        <p>Seiring bertambah usia, kecantikan Putri Napal Melintang semakin terdengar hingga ke seluruh negeri. Namun, ia belum pernah melihat wajahnya sendiri secara langsung karena saat itu belum ada cermin. Ia hanya sesekali melihat bayangannya dari pantulan benda-benda mengilap.</p>
+                        <p>Sebenarnya, ketika seseorang ingin melihat pantulan wajahnya, dia bisa pergi ke sungai atau perairan yang luas. Sayangnya, Putri Napal Melintang tidak pernah diizinkan pergi ke sungai yang letaknya cukup jauh dari istananya.</p>
+                        <p>Putri Napal Melintang tumbuh menjadi sosok perempuan dewasa yang semakin menawan. Kisah kecantikannya tersebar dan membuat para pangeran dari berbagai kerajaan ingin meminangnya.</p>
+                        <p>Suatu hari, datang pangeran dari Jambi untuk meminang Putri Napal Melintang. Ia meminta restu Raja Gagak dan menceritakan kemakmuran kerajaannya. Raja Gagak mengizinkannya dengan syarat sang pangeran menyerahkan harta berharga sebagai bukti keseriusannya.</p>
+                        <p>Pangeran Jambi pun memberikan batu permata, intan, dan berlian, serta berjanji akan kembali menjelang hari pernikahan. Raja Gagak sangat kagum melihat banyaknya harta yang diberikan. Kemudian ia menyimpan harta pemberian Pangeran Jambi di tempat tersembunyi yang terbaik. Melihat setumpuk harta berkilau itu, Raja Gagak bergumam, betapa mudah ia memperoleh harta kekayaan dari kerajaan lain. Sejak saat itu, hati sang raja tergoda untuk mendapatkan lebih banyak harta dengan memanfaatkan kecantikan putrinya.</p>
+                        
+                        <img src="https://placehold.co/800x400/8b5cf6/ffffff?text=Harta+Pinangan+Pangeran" class="w-full rounded-xl shadow" alt="Harta">
+                        <p>Beberapa waktu kemudian, datang pangeran dari Pulau Punjung untuk meminang Putri Napal Melintang. Sang pangeran menghadap Raja Gagak dan menuturkan maksud hatinya. Raja Gagak bingung. Ia ingin memberi tahu bahwa putrinya telah dilamar Pangeran Jambi, tetapi sifat tamaknya membuatnya memanfaatkan kesempatan untuk mendapatkan lebih banyak harta. Akhirnya, ia menerima pinangan Pangeran Pulau Punjung dengan syarat pangeran tersebut harus menyerahkan sejumlah harta berharga. Tak disangka-sangka, Pangeran Pulau Punjung kali ini menyerahkan beragam batu permata dan logam mulia. Jumlahnya jauh lebih banyak daripada yang diserahkan Pangeran Jambi.</p>
+                        <p>Ternyata, tidak hanya Pangeran Jambi dan Pangeran Pulau Punjung yang datang ke Kerajaan Negeri Kerinci. Beberapa waktu kemudian, pangeran-pangeran dari kerajaan lain pun berdatangan. Tak hanya satu atau dua, melainkan beberapa pangeran yang datang silih berganti. Semuanya datang dengan tujuan yang sama, yaitu meminang putrinya.</p>
+                        <p>Raja Gagak rupanya sudah semakin terbiasa berbohong. Satu dua kali sang raja tidak bicara jujur, ia pun terus melakukan hal yang sama untuk mendapatkan harta berlimpah.</p>
+                        <p>Suatu hari, Putri Napal Melintang penasaran dengan harta yang banyak di kerajaannya. Bukannya berbicara jujur kepada sang putri, Raja Gagak justru berbohong. Ia berkata bahwa harta tersebut adalah hadiah dari para sahabatnya dari berbagai negeri karena rasa kagum mereka terhadap Negeri Kerinci.</p>
+                        <p>Tak puas dengan jawaban sang ayah, Putri Napal Melintang yang masih penasaran kembali bertanya di kemudian hari. Namun, Raja Gagak tampaknya sudah semakin dikuasai oleh ketamakan. Ia malah mengancam sang putri dan menyuruhnya untuk tidak bertanya hal yang menurutnya bukan urusannya.</p>
+                        
+                        <img src="https://placehold.co/800x400/1e3a8a/ffffff?text=Pelarian+ke+Tepi+Telaga" class="w-full rounded-xl shadow" alt="Pelarian">
+                        <p>Waktu terus berlalu hingga hari pernikahan Putri Napal Melintang semakin dekat. Raja Gagak mulai panik dan khawatir para pangeran akan datang menagih janji. Dikuasai kebingungan dan ketakutan, ia pun berpikir untuk melarikan diri bersama putrinya.</p>
+                        <p>Suatu hari, Raja Gagak mengajak Putri Napal Melintang pergi jauh. Meski tidak tahu tujuannya, sang putri yang penurut mengikuti ayahnya. Raja Gagak juga membawa semua harta yang ia kumpulkan dari para pangeran.</p>
+                        <p>Dalam perjalanan tanpa tujuan, Putri Napal Melintang tidak pernah mengeluh. Sementara itu, Raja Gagak terus berjalan dengan rasa takut jika para pangeran atau utusan kerajaan lain menemukannya.</p>
+                        <p>Di tepi telaga yang jernih, Raja Gagak dan Putri Napal Melintang beristirahat. Putri bertanya kepada ayahnya mengapa mereka pergi jauh. Namun, karena lelah dan takut, Raja Gagak marah dan menyalahkan kecantikan putrinya sebagai penyebab mereka harus melarikan diri.</p>
+                        <p>Putri Napal Melintang sangat sedih. Ia menangis di tepi telaga, tetapi tetap memohon maaf kepada ayahnya meskipun sebenarnya kebohongan Raja Gagaklah yang menjadi penyebab masalah.</p>
+                        <p>Tak kuat lagi melanjutkan pelarian, Raja Gagak memojokkan sang putri dan mengatakan bahwa pelarian itu harus diakhiri dengan kematian. Ia memaksa memilih siapa yang harus mengorbankan diri tenggelam di telaga. Putri Napal Melintang yang baik hati pun bertekad menjaga nama baik ayahnya dan Kerajaan Negeri Kerinci.</p>
+                        <p>Sebelum mengorbankan diri, Putri Napal Melintang meminta izin bercermin di telaga. Untuk pertama dan terakhir kalinya ia melihat wajahnya, lalu berjalan ke tengah telaga hingga tenggelam. Setelah melihat pantulan wajahnya sendiri di telaga. Putri Napal Melintang berjalan terus hingga ke tengah telaga yang semakin dalam. Kecantikannya telah membawanya ke dalam kesengsaraan akhir hidupnya. Tak percaya dengan pengorbanan putrinya, Raja Gagak memanggil-manggil sang putri. Namun, semua terlambat, Putri Napal Melintang sudah tenggelam ke dasar telaga.</p>
+                        <p>Sambil menangis dan meraung-raung, Raja Gagak menyesali perbuatannya. Ia pun merasa tak sanggup lagi menyimpan harta berharga yang sesungguhnya telah membawa kesengsaraan bagi dirinya sendiri. Akhirnya, semua harta pinangan itu dibuang ke dalam telaga yang sama. Tak tersisa satu batu kecil pun.</p>
+                        
+                        <div class="p-6 bg-cyan-100 rounded-xl border-2 border-cyan-500 text-cyan-900 text-center font-bold">
+                            <p>Sejak saat itu, ketika malam tiba, Danau Kaco yang jernih dan biru pada siang hari mulai mengeluarkan kilauan yang indah. Masyarakat meyakini bahwa kilau itu berasal dari emas dan permata yang berada di dasar danau, serta kecantikan Putri Napal Melintang yang menjaga danau itu.</p>
+                        </div>
+                    </div>
+                `
+            },
+            3: { title: "Unsur Intrinsik Cerita", content: "<p class='text-lg'>Unsur intrinsik adalah unsur pembangun cerita dari dalam. Terdiri dari Tema, Tokoh, Latar, Alur, dan Amanat.</p><img src='https://placehold.co/800x300/eab308/ffffff?text=Unsur+Intrinsik' class='w-full rounded mt-4'>" },
+            4: { title: "Tokoh dan Penokohan", content: "<p class='text-lg'>Tokoh utama dalam cerita ini adalah <strong>Raja Gagak</strong> (memiliki sifat tamak/serakah) dan <strong>Putri Napal Melintang</strong> (penurut dan baik hati).</p><div class='grid grid-cols-2 gap-4 mt-4'><div class='bg-blue-100 p-4 rounded text-center'><h4 class='font-bold'>Raja Gagak</h4><p>Tamak, Pembohong</p></div><div class='bg-pink-100 p-4 rounded text-center'><h4 class='font-bold'>Putri Napal Melintang</h4><p>Baik hati, Penurut</p></div></div>" },
+            5: { title: "Alur dan Amanat Cerita", content: "<p class='text-lg'><strong>Amanat:</strong> Ketamakan dan kebohongan hanya akan membawa malapetaka dan kesengsaraan bagi diri sendiri maupun orang yang disayangi. Kita harus selalu berkata jujur dan tidak serakah atas harta benda.</p>" },
+            6: { title: "Kosakata dan Pemahaman", content: "<p class='text-lg'>Mari pahami kata-kata sulit:<br>1. <strong>Meminang:</strong> Melamar untuk dijadikan istri.<br>2. <strong>Pantulan:</strong> Bayangan diri di air/kaca.<br>3. <strong>Tamak:</strong> Serakah, selalu ingin mendapat lebih.</p>" }
+        };
+
+        /** =========================================================================
+         * DATA KUIS (60 SOAL, 10 PER MATERI)
+         * ========================================================================= */
+        const quizData = {
+            1: [
+                { q: "Apa yang dimaksud dengan cerita rakyat?", o: ["Cerita dari luar negeri", "Cerita yang berkembang di masyarakat masa lampau", "Cerita yang ditulis oleh penulis modern", "Berita di televisi"], a: 1 },
+                { q: "Legenda biasanya menceritakan tentang...", o: ["Kehidupan hewan", "Asal usul suatu tempat atau benda", "Kehidupan raja-raja Eropa", "Cara membuat makanan"], a: 1 },
+                { q: "Salah satu ciri cerita rakyat adalah anonim, artinya...", o: ["Pengarangnya tidak diketahui pasti", "Diceritakan lewat buku", "Ceritanya sangat panjang", "Berasal dari luar negeri"], a: 0 },
+                { q: "Legenda Danau Kaco berasal dari daerah...", o: ["Jawa Barat", "Sumatera Barat", "Jambi (Kerinci)", "Kalimantan"], a: 2 },
+                { q: "Fungsi utama cerita rakyat bagi masyarakat zaman dahulu adalah...", o: ["Untuk dijual", "Menyampaikan pesan moral dan hiburan", "Mencari musuh", "Sebagai laporan kekayaan"], a: 1 },
+                { q: "Cerita hewan yang bertingkah laku seperti manusia disebut...", o: ["Legenda", "Mite", "Fabel", "Sage"], a: 2 },
+                { q: "Cerita rakyat diturunkan dari generasi ke generasi secara...", o: ["Tertulis", "Lisan", "Rahasia", "Sandi"], a: 1 },
+                { q: "Pesan yang ingin disampaikan pengarang dalam cerita disebut...", o: ["Amanat", "Alur", "Latar", "Tokoh"], a: 0 },
+                { q: "Berikut ini yang BUKAN contoh legenda adalah...", o: ["Tangkuban Perahu", "Danau Toba", "Si Kancil Mencuri Timun", "Danau Kaco"], a: 2 },
+                { q: "Mengapa penting melestarikan cerita rakyat?", o: ["Karena cerita itu kuno", "Sebagai warisan budaya dan pedoman nilai kehidupan", "Agar mendapat nilai bagus di sekolah", "Karena disuruh guru"], a: 1 }
+            ],
+            2: [
+                { q: "Di manakah letak kerajaan yang dipimpin Raja Gagak?", o: ["Di puncak gunung", "Di kaki Gunung Kerinci", "Di tengah danau", "Di tepi laut"], a: 1 },
+                { q: "Siapa nama putri dari Raja Gagak?", o: ["Putri Salju", "Putri Jambi", "Putri Napal Melintang", "Putri Kaco"], a: 2 },
+                { q: "Mengapa Putri Napal Melintang belum pernah melihat wajahnya secara langsung?", o: ["Karena wajahnya ditutup topeng", "Karena saat itu belum ada cermin", "Karena dilarang oleh ibunya", "Karena matanya buta"], a: 1 },
+                { q: "Dari kerajaan mana pangeran PERTAMA yang datang meminang?", o: ["Kerajaan Jambi", "Kerajaan Pulau Punjung", "Kerajaan Majapahit", "Kerajaan Sriwijaya"], a: 0 },
+                { q: "Apa syarat yang diajukan Raja Gagak kepada pangeran yang meminang?", o: ["Membangun seribu candi", "Menyerahkan harta berharga", "Berperang melawannya", "Membawa air kehidupan"], a: 1 },
+                { q: "Apa yang membuat Raja Gagak tergoda untuk menerima banyak pinangan?", o: ["Ketampanan para pangeran", "Sifat tamak melihat tumpukan harta berkilau", "Keinginan memperluas wilayah", "Perintah dari leluhur"], a: 1 },
+                { q: "Mengapa Raja Gagak dan putrinya melarikan diri?", o: ["Ingin berlibur", "Diusir oleh rakyat", "Panik dan takut pangeran menagih janji pernikahan", "Mencari tempat tinggal baru"], a: 2 },
+                { q: "Apa yang dilakukan Putri Napal Melintang sebelum menenggelamkan diri?", o: ["Meminta izin bercermin di telaga", "Mengembalikan semua harta", "Membunuh ayahnya", "Menulis surat"], a: 0 },
+                { q: "Apa yang dilakukan Raja Gagak setelah putrinya tenggelam?", o: ["Pulang ke istana bahagia", "Menyesal dan membuang semua harta ke telaga", "Membangun istana baru", "Mencari putri baru"], a: 1 },
+                { q: "Masyarakat meyakini kilauan di Danau Kaco berasal dari...", o: ["Lampu di dasar air", "Pantulan bulan", "Emas permata dan kecantikan Putri Napal Melintang", "Ikan ajaib"], a: 2 }
+            ],
+            3: [
+                { q: "Pesan moral dalam sebuah cerita disebut...", o: ["Alur", "Amanat", "Latar", "Tema"], a: 1 },
+                { q: "Tempat terjadinya peristiwa dalam cerita disebut...", o: ["Latar tempat", "Alur", "Penokohan", "Sudut pandang"], a: 0 },
+                { q: "Latar tempat utama dalam akhir cerita Legenda Danau Kaco adalah...", o: ["Istana Raja Gagak", "Tepi Telaga / Danau", "Pasar kerajaan", "Hutan belantara"], a: 1 },
+                { q: "Jalan cerita atau urutan kejadian disebut...", o: ["Tokoh", "Alur", "Tema", "Amanat"], a: 1 },
+                { q: "Konflik utama dalam cerita Danau Kaco disebabkan oleh...", o: ["Kecantikan sang putri", "Peperangan antar kerajaan", "Ketamakan dan kebohongan Raja Gagak", "Kemiskinan rakyat"], a: 2 },
+                { q: "Unsur yang menggambarkan sifat tokoh disebut...", o: ["Latar", "Penokohan", "Tema", "Alur"], a: 1 },
+                { q: "Tokoh yang memiliki sifat baik disebut tokoh...", o: ["Antagonis", "Protagonis", "Tritagonis", "Figuran"], a: 1 },
+                { q: "Tokoh yang memiliki sifat jahat/buruk disebut tokoh...", o: ["Protagonis", "Antagonis", "Tritagonis", "Figuran"], a: 1 },
+                { q: "Tema utama dari cerita Danau Kaco adalah...", o: ["Kepahlawanan", "Pendidikan", "Akibat ketamakan dan kebohongan", "Persahabatan hewan"], a: 2 },
+                { q: "Latar waktu saat Danau Kaco mulai mengeluarkan kilauan indah adalah...", o: ["Pagi hari", "Siang hari", "Sore hari", "Malam hari"], a: 3 }
+            ],
+            4: [ {q: "Watak utama Raja Gagak adalah...", o:["Dermawan","Tamak/Serakah","Penyayang","Pemberani"], a:1}, {q: "Putri Napal Melintang memiliki sifat...", o:["Pembangkang","Pemarah","Baik hati dan penurut","Sombong"], a:2}, {q: "Tindakan Raja Gagak menerima banyak pinangan menunjukkan sikap...", o:["Adil","Tidak jujur","Bijaksana","Ramah"], a:1}, {q: "Mengapa Raja Gagak menyalahkan kecantikan putrinya di tepi telaga?", o:["Karena ia lelah, takut, dan tak mau mengakui kesalahannya sendiri","Karena putrinya jelek","Karena putrinya menangis","Karena putri meminta cermin"], a:0}, {q: "Sikap Pangeran Jambi saat meminang adalah...", o:["Sombong","Membawa pasukan","Bersungguh-sungguh menyerahkan harta","Menipu"], a:2}, {q: "Pengorbanan Putri Napal Melintang bertujuan untuk...", o:["Mendapat harta","Menjaga nama baik ayah dan kerajaan","Menjadi ikan","Menyelaraskan alam"], a:1}, {q: "Akhir dari watak tamak Raja Gagak adalah...", o:["Kaya raya","Penyesalan mendalam dan kehilangan orang yang disayangi","Menjadi raja besar","Menguasai dunia"], a:1}, {q: "Hubungan antara Raja Gagak dan Putri Napal awalnya adalah...", o:["Saling membenci","Ayah yang sangat menyayangi putrinya","Tidak saling kenal","Musuh"], a:1}, {q: "Pangeran Pulau Punjung menyerahkan harta...", o:["Sama dengan Pangeran Jambi","Lebih sedikit","Jauh lebih banyak dari Pangeran Jambi","Tidak membawa apa-apa"], a:2}, {q: "Kesalahan terbesar Raja Gagak adalah...", o:["Berjalan jauh","Membohongi para pangeran dan putrinya sendiri demi harta","Tidur di tepi telaga","Tidak membelikan cermin"], a:1} ],
+            5: [ {q: "Amanat utama cerita ini adalah...", o:["Jangan suka berjalan ke hutan","Jangan berbohong dan tamak karena akan membawa malapetaka","Carilah cermin yang besar","Harta adalah segalanya"], a:1}, {q: "Peristiwa puncak (klimaks) cerita ini terjadi saat...", o:["Pangeran Jambi datang","Putri menenggelamkan diri di telaga","Raja membuang harta","Putri lahir"], a:1}, {q: "Bagaimana akhir cerita Legenda Danau Kaco?", o:["Bahagia (Happy Ending)","Menyedihkan (Tragis)","Menggantung","Lucu"], a:1}, {q: "Sikap yang patut ditiru dari cerita ini adalah...", o:["Sifat tamak Raja Gagak","Kebohongan demi harta","Rela berkorban demi kehormatan","Melarikan diri dari masalah"], a:2}, {q: "Sikap yang HARUS DIHINDARI dari cerita ini adalah...", o:["Berbuat baik","Ketamakan dan kebohongan","Membantu orang tua","Berdoa"], a:1}, {q: "Munculnya konflik cerita dimulai ketika...", o:["Putri lahir","Raja Gagak tergoda harta dan menerima pinangan pangeran lain","Mereka istirahat","Danau bercahaya"], a:1}, {q: "Akibat dari pelarian tanpa tujuan adalah...", o:["Menemukan istana baru","Kelelahan, ketakutan, dan akhir yang tragis","Mendapat harta baru","Bertemu teman"], a:1}, {q: "Penyelesaian dari cerita ini adalah...", o:["Putri hidup kembali","Raja membuang semua harta pinangan ke telaga sebagai bentuk penyesalan","Pangeran datang menyelamatkan","Raja menjadi kaya"], a:1}, {q: "Nilai kehidupan yang dilanggar oleh Raja Gagak adalah...", o:["Nilai kejujuran","Nilai kebersihan","Nilai estetika","Nilai olahraga"], a:0}, {q: "Pesan moral untuk seorang ayah dari cerita ini...", o:["Harus kaya","Harus melindungi anak, bukan menjadikannya alat mendapat harta","Harus punya banyak kerajaan","Harus pintar lari"], a:1} ],
+            6: [ {q: "Sinonim kata 'tamak' adalah...", o:["Dermawan","Serakah","Jujur","Sabar"], a:1}, {q: "Apa arti kata 'meminang'?", o:["Mengusir","Melamar untuk dijadikan istri","Membunuh","Menjual"], a:1}, {q: "Antonim (lawan kata) dari kata 'jujur' adalah...", o:["Benar","Bohong","Baik","Pintar"], a:1}, {q: "Makna kata 'pantulan' dalam cerita adalah...", o:["Benda yang dilempar","Bayangan diri yang terlihat di air/cermin","Suara gema","Cahaya matahari"], a:1}, {q: "Kata 'berlimpah' memiliki arti...", o:["Sangat sedikit","Habis","Sangat banyak/turah-turah","Kotor"], a:2}, {q: "Informasi penting dari paragraf pertama adalah...", o:["Kerajaan dipimpin Raja Gagak di kaki Gunung Kerinci","Danau kaco bercahaya","Pangeran datang","Harta dibuang"], a:0}, {q: "Apa makna dari kalimat 'Raja Gagak rupanya sudah semakin terbiasa berbohong'?", o:["Raja Gagak anak yang baik","Bohong telah menjadi kebiasaan (watak) bagi sang raja","Raja Gagak pintar pidato","Raja Gagak tidak bisa bicara"], a:1}, {q: "Kalimat mana yang menunjukkan ketakutan Raja Gagak?", o:["Raja Gagak sangat kagum melihat harta","Dikuasai kebingungan dan ketakutan, ia pun berpikir untuk melarikan diri","Raja Gagak memojokkan sang putri","Ia memiliki putri cantik"], a:1}, {q: "Kata 'kesengsaraan' memiliki makna yang sama dengan...", o:["Kebahagiaan","Penderitaan","Kekayaan","Kedamaian"], a:1}, {q: "Kalimat yang menunjukkan penyesalan adalah...", o:["Sambil menangis dan meraung-raung, Raja Gagak menyesali perbuatannya","Ia menyuruh putrinya tak bertanya","Ia menerima pinangan","Putri menangis di tepi telaga"], a:0} ]
+        };
+
+        /** =========================================================================
+         * APP STATE & API LOGIC
+         * ========================================================================= */
+        // CATATAN PENTING: Gunakan URL API dari Apps Script yang telah dideploy
+        const API_URL = "https://script.google.com/macros/s/AKfycbzjtS776lknsr1P4uh94WLpX1nCFtDIRBEwEpbhDCRuyBK0CKVXb9efagRQwrmMjFfFetQ/exec";
         
-        document.getElementById('teacher-data-table').innerHTML = html;
-    } else {
-        document.getElementById('teacher-data-table').innerHTML = 'Gagal memuat data dari Google Sheets.';
-    }
-}
-</script>
+        let currentUser = null;
+        let currentMaterial = 1;
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+        let quizAnswers = { benar: 0, salah: 0 };
+        
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full font-bold shadow-lg z-50 transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} text-white opacity-100`;
+            setTimeout(() => { toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 3000);
+        }
+
+        async function apiRequest(data) {
+            try {
+                // Gunakan text/plain untuk hindari CORS preflight di Apps Script
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+                return await res.json();
+            } catch (err) {
+                console.error("API Error:", err);
+                return { status: "error" };
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hide'));
+            document.getElementById(screenId).classList.remove('hide');
+            window.scrollTo(0,0);
+        }
+
+        /** =========================================================================
+         * LOGIN LOGIC (Aturan Mutlak)
+         * ========================================================================= */
+        async function handleLogin() {
+            const nama = document.getElementById('input-nama').value.trim();
+            if (!nama) {
+                showToast("Silakan masukkan nama kamu terlebih dahulu!", true);
+                playSfx('wrong');
+                return;
+            }
+
+            document.getElementById('login-loader').classList.remove('hide');
+            playSfx('click');
+
+            const res = await apiRequest({ action: "login", nama: nama });
+            
+            document.getElementById('login-loader').classList.add('hide');
+            
+            if (res.status === "success") {
+                currentUser = res.data;
+                document.getElementById('dash-nama').innerText = currentUser.nama;
+                showToast(`Selamat datang, ${currentUser.nama}!`);
+                playSfx('correct');
+                loadProgress();
+                showScreen('screen-dashboard');
+            } else {
+                showToast("Gagal terhubung ke server. Bermain dalam mode luring sementara.", true);
+                // Fallback local jika API gagal
+                currentUser = { id_siswa: 'LOCAL123', nama: nama, kelas: "6" };
+                document.getElementById('dash-nama').innerText = nama;
+                showScreen('screen-dashboard');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('input-nama').value = '';
+            showScreen('screen-login');
+        }
+
+        async function loadProgress() {
+            if(!currentUser) return;
+            const res = await apiRequest({ action: "getStudentData", id_siswa: currentUser.id_siswa });
+            if(res.status === "success") {
+                const prog = res.progress;
+                document.getElementById('dash-xp').innerText = `${prog.xp} XP`;
+                // Unlock nodes logic based on progress
+                if(prog.m1 > 0) document.getElementById('node-2').classList.replace('node-locked', 'node-active');
+                if(prog.m2 > 0) document.getElementById('node-3').classList.replace('node-locked', 'node-active');
+                if(prog.m3 > 0) document.getElementById('node-4').classList.replace('node-locked', 'node-active');
+                if(prog.m4 > 0) document.getElementById('node-5').classList.replace('node-locked', 'node-active');
+                if(prog.m5 > 0) document.getElementById('node-6').classList.replace('node-locked', 'node-active');
+            }
+        }
+
+        /** =========================================================================
+         * MATERIAL & QUIZ LOGIC
+         * ========================================================================= */
+        function openMaterial(id) {
+            playSfx('click');
+            currentMaterial = id;
+            const data = materiData[id];
+            
+            let html = `<h2 class="font-heading text-3xl text-blue-900 mb-6 text-center">${data.title}</h2>`;
+            html += data.content;
+            
+            document.getElementById('material-content').innerHTML = html;
+            showScreen('screen-material');
+        }
+
+        function readAloud() {
+            const text = document.getElementById('story-text').innerText;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.9; // Sedikit lebih lambat agar jelas
+            speechSynthesis.speak(utterance);
+        }
+
+        function startQuiz() {
+            playSfx('click');
+            currentQuizIndex = 0;
+            quizScore = 0;
+            quizAnswers = { benar: 0, salah: 0 };
+            renderQuiz();
+            showScreen('screen-quiz');
+        }
+
+        function renderQuiz() {
+            const qData = quizData[currentMaterial][currentQuizIndex];
+            document.getElementById('quiz-progress').innerText = `${currentQuizIndex + 1}/10`;
+            document.getElementById('quiz-question').innerText = qData.q;
+            document.getElementById('quiz-feedback').classList.add('hide');
+            document.getElementById('quiz-next-btn').classList.add('hide');
+            
+            let optionsHtml = '';
+            qData.o.forEach((opt, idx) => {
+                optionsHtml += `<button onclick="answerQuiz(${idx})" class="quiz-opt text-left bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-500 font-bold p-4 rounded-xl shadow-md btn-bounce text-lg">${opt}</button>`;
+            });
+            document.getElementById('quiz-options').innerHTML = optionsHtml;
+        }
+
+        function answerQuiz(selectedIdx) {
+            const qData = quizData[currentMaterial][currentQuizIndex];
+            const isCorrect = (selectedIdx === qData.a);
+            
+            const btns = document.querySelectorAll('.quiz-opt');
+            btns.forEach(btn => btn.disabled = true);
+            
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hide');
+            
+            if (isCorrect) {
+                btns[selectedIdx].classList.replace('bg-white', 'bg-green-500');
+                btns[selectedIdx].classList.add('text-white');
+                feedback.innerText = "⭐ BENAR! Luar biasa!";
+                feedback.className = "mt-6 p-4 rounded-lg font-bold text-center bg-green-100 text-green-800 text-xl";
+                quizScore += 10;
+                quizAnswers.benar++;
+                playSfx('correct');
+            } else {
+                btns[selectedIdx].classList.replace('bg-white', 'bg-red-500');
+                btns[selectedIdx].classList.add('text-white');
+                btns[qData.a].classList.replace('bg-white', 'bg-green-500');
+                btns[qData.a].classList.add('text-white');
+                feedback.innerText = "❌ KURANG TEPAT! Perhatikan jawaban yang benar berwarna hijau.";
+                feedback.className = "mt-6 p-4 rounded-lg font-bold text-center bg-red-100 text-red-800 text-xl";
+                quizAnswers.salah++;
+                playSfx('wrong');
+            }
+            
+            document.getElementById('quiz-next-btn').classList.remove('hide');
+        }
+
+        function nextQuestion() {
+            playSfx('click');
+            currentQuizIndex++;
+            if (currentQuizIndex < 10) {
+                renderQuiz();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-question').innerHTML = `
+                <div class="text-4xl mb-4">🏆</div>
+                KUIS SELESAI!<br>
+                <span class="text-green-500">Skor Kamu: ${quizScore}</span>
+            `;
+            document.getElementById('quiz-options').innerHTML = '';
+            document.getElementById('quiz-feedback').classList.add('hide');
+            
+            const btn = document.getElementById('quiz-next-btn');
+            btn.innerText = "Kembali ke Peta";
+            btn.onclick = () => { showScreen('screen-dashboard'); loadProgress(); };
+            
+            // Simpan ke API
+            if(currentUser) {
+                apiRequest({
+                    action: "saveQuiz",
+                    id_siswa: currentUser.id_siswa,
+                    nama: currentUser.nama,
+                    kelas: currentUser.kelas,
+                    materi: currentMaterial,
+                    skor: quizScore,
+                    benar: quizAnswers.benar,
+                    salah: quizAnswers.salah
+                });
+            }
+        }
+
+        /** =========================================================================
+         * GAME ENGINE (8 GAMES COMPRESSED LOGIC)
+         * ========================================================================= */
+        let currentGame = 0;
+        
+        function openGame(id) {
+            playSfx('click');
+            currentGame = id;
+            document.getElementById('game-score').innerText = '0';
+            showScreen('screen-game');
+            const container = document.getElementById('game-container');
+            container.innerHTML = ''; // Bersihkan
+
+            // Masing-masing game memiliki mekanisme interaktif yang digenerate via DOM
+            if (id === 1) initGame1(container); // Petualangan
+            if (id === 2) initGame2(container); // Susun Cerita (Drag Drop)
+            if (id === 3) initGame3(container); // Tebak Tokoh
+            if (id === 4) initGame4(container); // Pasangan
+            if (id === 5) initGame5(container); // Labirin (Grid movement)
+            if (id === 6) initGame6(container); // Benar Salah
+            if (id === 7) initGame7(container); // Kata Rahasia
+            if (id === 8) initGame8(container); // Kuis Boss
+        }
+
+        function saveGameScore(score) {
+            document.getElementById('game-score').innerText = score;
+            if(currentUser) {
+                apiRequest({
+                    action: "saveGame",
+                    id_siswa: currentUser.id_siswa,
+                    nama: currentUser.nama,
+                    kelas: currentUser.kelas,
+                    nama_game: `Game_${currentGame}`,
+                    skor: score
+                });
+            }
+        }
+
+        // GAME 1: PETUALANGAN (Path clicking)
+        function initGame1(c) {
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Petualangan Hutan</h3><p class="text-center mb-4">Klik jejak kaki untuk maju. Jawab pertanyaan rintangan!</p><div class="relative w-full h-64 bg-green-100 rounded-xl" id="g1-map"></div>`;
+            const map = document.getElementById('g1-map');
+            let step = 0;
+            for(let i=0; i<5; i++) {
+                const node = document.createElement('div');
+                node.className = `absolute w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold cursor-pointer transition-all ${i===0?'':'opacity-50 pointer-events-none'}`;
+                node.style.left = `${10 + i*18}%`; node.style.top = `${50 + (i%2===0?-20:20)}%`;
+                node.innerText = i+1;
+                node.onclick = () => {
+                    if(i === step) {
+                        playSfx('correct');
+                        node.style.backgroundColor = '#10b981'; // done
+                        step++;
+                        saveGameScore(step * 20);
+                        if(step < 5) map.children[step].classList.remove('opacity-50', 'pointer-events-none');
+                        else showToast('Horee! Kamu sampai di Danau Kaco!');
+                    }
+                };
+                map.appendChild(node);
+            }
+        }
+
+        // GAME 2: SUSUN CERITA (Simplified sorting clicks)
+        function initGame2(c) {
+            const sentences = ["Pangeran datang meminang", "Raja Gagak menerima banyak harta", "Raja panik dan lari ke hutan", "Putri menangis di tepi telaga", "Putri tenggelam menjadi Danau Kaco"];
+            let shuffled = [...sentences].sort(() => Math.random() - 0.5);
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Susun Cerita</h3><div id="g2-list" class="space-y-2"></div><button onclick="checkG2()" class="mt-4 w-full bg-blue-500 text-white p-3 rounded font-bold btn-bounce">Cek Susunan</button>`;
+            
+            const renderList = () => {
+                const list = document.getElementById('g2-list'); list.innerHTML = '';
+                shuffled.forEach((s, idx) => {
+                    list.innerHTML += `<div class="p-3 bg-blue-50 border-2 border-blue-200 rounded font-bold flex justify-between">
+                        <span>${s}</span>
+                        <div><button onclick="swapG2(${idx}, -1)" class="bg-gray-300 px-2 rounded">⬆</button> <button onclick="swapG2(${idx}, 1)" class="bg-gray-300 px-2 rounded">⬇</button></div>
+                    </div>`;
+                });
+            };
+            window.swapG2 = (idx, dir) => {
+                if(idx+dir >= 0 && idx+dir < shuffled.length) {
+                    let temp = shuffled[idx]; shuffled[idx] = shuffled[idx+dir]; shuffled[idx+dir] = temp;
+                    playSfx('click'); renderList();
+                }
+            };
+            window.checkG2 = () => {
+                if(JSON.stringify(shuffled) === JSON.stringify(sentences)) {
+                    playSfx('correct'); showToast('Tepat Sekali!'); saveGameScore(100);
+                } else { playSfx('wrong'); showToast('Masih belum urut, coba lagi!', true); }
+            };
+            renderList();
+        }
+
+        // GAME 3: TEBAK TOKOH
+        function initGame3(c) {
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Tebak Tokoh</h3>
+                <div class="text-center bg-yellow-100 p-6 rounded-xl mb-4"><p class="text-xl font-bold">"Aku berbohong karena tergoda oleh tumpukan batu permata."</p><p class="mt-2 text-gray-600">Siapakah aku?</p></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="resG3(false)" class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-lg btn-bounce">Pangeran Jambi</button>
+                    <button onclick="resG3(true)" class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-lg btn-bounce">Raja Gagak</button>
+                    <button onclick="resG3(false)" class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-lg btn-bounce">Putri Napal</button>
+                    <button onclick="resG3(false)" class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-lg btn-bounce">Rakyat Kerinci</button>
+                </div>`;
+            window.resG3 = (isCorrect) => {
+                if(isCorrect){ playSfx('correct'); showToast('Benar!'); saveGameScore(100); }
+                else { playSfx('wrong'); showToast('Salah!', true); }
+            }
+        }
+
+        // GAME 4: PASANGAN (Memory Match)
+        function initGame4(c) {
+            const pairs = ["Raja Gagak", "Tamak", "Putri", "Baik Hati", "Danau", "Bercahaya", "Pangeran", "Bawa Harta"];
+            // Mix
+            let cards = [...pairs];
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Pasangkan Kata Terkait</h3><div class="grid grid-cols-4 gap-2" id="g4-grid"></div>`;
+            const grid = document.getElementById('g4-grid');
+            let flipped = []; let matched = 0;
+            
+            cards.forEach((val, i) => {
+                const card = document.createElement('div');
+                card.className = 'bg-blue-500 text-transparent font-bold h-20 rounded-lg flex items-center justify-center cursor-pointer select-none border-2 border-blue-600';
+                card.onclick = () => {
+                    if(flipped.length < 2 && !card.classList.contains('matched') && !flipped.includes(card)) {
+                        card.innerText = val; card.classList.replace('bg-blue-500', 'bg-white'); card.classList.replace('text-transparent', 'text-blue-900');
+                        playSfx('click'); flipped.push({el: card, val: val});
+                        if(flipped.length === 2) {
+                            setTimeout(() => {
+                                // Logic super simple for pair matching based on index logic for demo
+                                const isMatch = (pairs.indexOf(flipped[0].val) % 2 === 0 && pairs.indexOf(flipped[1].val) === pairs.indexOf(flipped[0].val) + 1) || 
+                                                (pairs.indexOf(flipped[1].val) % 2 === 0 && pairs.indexOf(flipped[0].val) === pairs.indexOf(flipped[1].val) + 1);
+                                
+                                if(isMatch) {
+                                    playSfx('correct'); flipped.forEach(f => { f.el.classList.add('matched'); f.el.classList.replace('border-blue-600', 'border-green-500'); });
+                                    matched++; saveGameScore(matched * 25);
+                                    if(matched === 4) showToast("Luar Biasa!");
+                                } else {
+                                    playSfx('wrong'); flipped.forEach(f => { f.el.innerText = ''; f.el.classList.replace('bg-white', 'bg-blue-500'); f.el.classList.replace('text-blue-900', 'text-transparent'); });
+                                }
+                                flipped = [];
+                            }, 800);
+                        }
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        // GAME 5: LABIRIN (Simple Grid)
+        function initGame5(c) {
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Labirin Danau</h3>
+                <div class="grid grid-cols-5 gap-1 w-64 h-64 mx-auto bg-gray-200 border-4 border-gray-800 p-1" id="g5-grid"></div>
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="moveG5(0,-1)" class="w-12 h-12 bg-blue-500 text-white rounded-full font-bold btn-bounce">⬆</button>
+                    <button onclick="moveG5(0,1)" class="w-12 h-12 bg-blue-500 text-white rounded-full font-bold btn-bounce">⬇</button>
+                    <button onclick="moveG5(1,0)" class="w-12 h-12 bg-blue-500 text-white rounded-full font-bold btn-bounce">➡</button>
+                </div>`;
+            const grid = document.getElementById('g5-grid');
+            let px=0, py=0; const tx=4, ty=4;
+            const draw = () => {
+                grid.innerHTML='';
+                for(let y=0; y<5; y++){
+                    for(let x=0; x<5; x++){
+                        let cell = document.createElement('div');
+                        cell.className = 'w-full h-full bg-white rounded-sm flex items-center justify-center text-xl';
+                        if(x===px && y===py) cell.innerText = '🏃';
+                        else if(x===tx && y===ty) cell.innerText = '💎';
+                        grid.appendChild(cell);
+                    }
+                }
+            };
+            window.moveG5 = (dx,dy) => {
+                if(px+dx>=0 && px+dx<5 && py+dy>=0 && py+dy<5) {
+                    px+=dx; py+=dy; playSfx('click'); draw();
+                    if(px===tx && py===ty) { playSfx('correct'); showToast('Berhasil menemukan harta!'); saveGameScore(100); }
+                }
+            };
+            draw();
+        }
+
+        // GAME 6: BENAR ATAU SALAH
+        function initGame6(c) {
+            let q = "Danau Kaco terletak di kaki Gunung Kerinci.";
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Benar / Salah</h3>
+                <div class="bg-blue-100 p-8 rounded-xl text-center font-bold text-xl mb-6 shadow-inner">${q}</div>
+                <div class="flex justify-center gap-8">
+                    <button onclick="resG6(true)" class="w-32 h-32 bg-green-500 text-white font-bold text-2xl rounded-full shadow-3d btn-bounce border-4 border-green-700">BENAR</button>
+                    <button onclick="resG6(false)" class="w-32 h-32 bg-red-500 text-white font-bold text-2xl rounded-full shadow-3d btn-bounce border-4 border-red-700">SALAH</button>
+                </div>`;
+            window.resG6 = (ans) => {
+                if(ans === true) { playSfx('correct'); showToast('Tepat Sekali!'); saveGameScore(100); c.innerHTML = "<h3 class='text-green-600 text-3xl font-bold text-center mt-10'>Hebat! Lanjut ke game lain.</h3>"; }
+                else { playSfx('wrong'); showToast('Pernyataan itu benar lho!', true); }
+            }
+        }
+
+        // GAME 7: TEBAK KATA RAHASIA
+        function initGame7(c) {
+            let word = "TAMAK"; let guessed = [];
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4">Tebak Kata</h3>
+                <p class="text-center text-gray-600 mb-4">Petunjuk: Sifat buruk Raja Gagak</p>
+                <div id="g7-word" class="flex justify-center gap-2 mb-6 text-3xl font-bold text-blue-900 tracking-widest"></div>
+                <div id="g7-keys" class="grid grid-cols-7 gap-2 max-w-lg mx-auto"></div>`;
+            
+            const updateWord = () => {
+                let display = ''; let won = true;
+                for(let char of word) {
+                    if(guessed.includes(char)) display += char; else { display += '_'; won = false; }
+                }
+                document.getElementById('g7-word').innerText = display.split('').join(' ');
+                if(won) { playSfx('correct'); showToast('Kamu Berhasil!'); saveGameScore(100); }
+            };
+            const keys = document.getElementById('g7-keys');
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach(l => {
+                let btn = document.createElement('button');
+                btn.innerText = l; btn.className = 'bg-gray-200 p-2 rounded font-bold btn-bounce';
+                btn.onclick = () => {
+                    btn.disabled = true; btn.classList.replace('bg-gray-200', 'bg-gray-400');
+                    if(word.includes(l)) { playSfx('click'); guessed.push(l); updateWord(); }
+                    else { playSfx('wrong'); }
+                };
+                keys.appendChild(btn);
+            });
+            updateWord();
+        }
+
+        // GAME 8: PERTARUNGAN KUIS RAJA GAGAK
+        function initGame8(c) {
+            c.innerHTML = `<h3 class="text-2xl font-bold text-center mb-4 text-red-600">BOSS: Raja Gagak</h3>
+                <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl mb-4 text-white">
+                    <div class="text-center"><div class="text-4xl mb-2">👦</div><div class="w-32 h-4 bg-gray-700 rounded"><div id="hp-player" class="h-full bg-green-500 rounded" style="width:100%"></div></div></div>
+                    <div class="text-2xl font-bold">VS</div>
+                    <div class="text-center"><div class="text-4xl mb-2">🦅</div><div class="w-32 h-4 bg-gray-700 rounded"><div id="hp-boss" class="h-full bg-red-500 rounded" style="width:100%"></div></div></div>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-xl text-center font-bold mb-4">Siapa yang harus berkorban di telaga?</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="fight(false)" class="bg-white p-3 rounded font-bold border btn-bounce">Raja Gagak</button>
+                    <button onclick="fight(true)" class="bg-white p-3 rounded font-bold border btn-bounce">Putri Napal</button>
+                </div>`;
+            
+            let bossHp = 100;
+            window.fight = (isCorrect) => {
+                if(isCorrect) {
+                    playSfx('correct'); bossHp -= 50;
+                    document.getElementById('hp-boss').style.width = bossHp+'%';
+                    if(bossHp <= 0) { showToast("KAMU MENGALAHKAN KETAMAKAN!"); saveGameScore(200); }
+                } else {
+                    playSfx('wrong'); document.getElementById('hp-player').style.width = '50%';
+                    showToast("Awas serangan bos!", true);
+                }
+            }
+        }
+        
+        /** =========================================================================
+         * INisialisasi Guru
+         * ========================================================================= */
+         async function loadTeacherData() {
+            const tbody = document.getElementById('teacher-table-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Memuat data...</td></tr>';
+            const res = await apiRequest({ action: "getTeacherData" });
+            if(res.status === "success" && res.data.length > 0) {
+                let html = '';
+                res.data.forEach(d => {
+                    html += `<tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-bold">${d.nama}</td>
+                        <td class="p-3">${d.m1}</td><td class="p-3">${d.m2}</td>
+                        <td class="p-3">${d.m3}</td><td class="p-3">${d.m4}</td>
+                        <td class="p-3">${d.m5}</td><td class="p-3">${d.m6}</td>
+                        <td class="p-3 text-yellow-600 font-bold">${d.xp}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Belum ada data siswa.</td></tr>';
+            }
+         }
+
+         // Override showScreen untuk meload data guru khusus di layar guru
+         const originalShowScreen = showScreen;
+         showScreen = function(id) {
+             originalShowScreen(id);
+             if(id === 'screen-teacher') {
+                 loadTeacherData();
+             }
+         }
+
+    </script>
 </body>
 </html>
