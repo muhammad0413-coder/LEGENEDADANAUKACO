@@ -41,6 +41,15 @@
         /* Loader */
         .loader { border: 5px solid #f3f3f4; border-top: 5px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Animasi Transisi Layar */
+        @keyframes fadeInZoom {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .screen-active {
+            animation: fadeInZoom 0.4s ease-out forwards;
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -79,7 +88,7 @@
     </div>
 
     <!-- 1. LOGIN SCREEN -->
-    <div id="screen-login" class="min-h-screen flex flex-col items-center justify-center bg-blue-900 bg-[url('https://placehold.co/1920x1080/1e3a8a/3b82f6?text=Danau+Kaco+Hutan+Tropis')] bg-cover bg-blend-overlay text-white p-4 relative z-10">
+    <div id="screen-login" class="screen screen-active min-h-screen flex flex-col items-center justify-center bg-blue-900 bg-[url('https://placehold.co/1920x1080/1e3a8a/3b82f6?text=Danau+Kaco+Hutan+Tropis')] bg-cover bg-blend-overlay text-white p-4 relative z-10">
         <div class="glass-panel text-center p-8 max-w-md w-full animate-pop">
             <div class="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-yellow-400 shadow-lg">
                 <span class="text-4xl">📖</span>
@@ -106,7 +115,7 @@
     </div>
 
     <!-- 2. DASHBOARD SCREEN -->
-    <div id="screen-dashboard" class="hide min-h-screen bg-adventure relative p-4 pb-24">
+    <div id="screen-dashboard" class="screen hide min-h-screen bg-adventure relative p-4 pb-24">
         <!-- Header / Player Info -->
         <div class="glass-panel flex justify-between items-center p-4 mb-6 sticky top-4 z-40">
             <div class="flex items-center gap-4">
@@ -182,7 +191,7 @@
     </div>
 
     <!-- 3. MATERIAL SCREEN -->
-    <div id="screen-material" class="hide min-h-screen bg-white p-4">
+    <div id="screen-material" class="screen hide min-h-screen bg-white p-4">
         <div class="max-w-3xl mx-auto">
             <button onclick="showScreen('screen-dashboard')" class="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-bounce">⬅ Kembali ke Peta</button>
             <div id="material-content" class="bg-white rounded-2xl shadow-lg p-6 lg:p-10 border border-blue-100">
@@ -198,7 +207,7 @@
     </div>
 
     <!-- 4. QUIZ SCREEN -->
-    <div id="screen-quiz" class="hide min-h-screen bg-blue-900 p-4 flex flex-col items-center justify-center">
+    <div id="screen-quiz" class="screen hide min-h-screen bg-blue-900 p-4 flex flex-col items-center justify-center">
         <div class="max-w-2xl w-full glass-panel p-8">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <h3 class="font-heading text-xl text-blue-800">Kuis Pengetahuan</h3>
@@ -220,7 +229,7 @@
     </div>
 
     <!-- 5. GAMES SCREEN -->
-    <div id="screen-game" class="hide min-h-screen bg-green-900 p-4 flex flex-col items-center">
+    <div id="screen-game" class="screen hide min-h-screen bg-green-900 p-4 flex flex-col items-center">
         <div class="w-full max-w-4xl flex justify-between mb-4">
             <button onclick="showScreen('screen-dashboard')" class="bg-white text-green-900 font-bold py-2 px-4 rounded-lg btn-bounce shadow">⬅ Keluar Game</button>
             <div class="bg-yellow-400 text-yellow-900 font-bold py-2 px-6 rounded-full shadow border-2 border-white">
@@ -234,7 +243,7 @@
     </div>
 
     <!-- 6. TEACHER DASHBOARD -->
-    <div id="screen-teacher" class="hide min-h-screen bg-gray-100 p-6">
+    <div id="screen-teacher" class="screen hide min-h-screen bg-gray-100 p-6">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="font-heading text-3xl text-purple-800">Dashboard Guru Kelas 6</h2>
@@ -418,8 +427,15 @@
         }
 
         function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hide'));
-            document.getElementById(screenId).classList.remove('hide');
+            // Sembunyikan semua layar dan hapus animasi aktif
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.add('hide');
+                s.classList.remove('screen-active');
+            });
+            // Tampilkan layar target dan jalankan animasi
+            const target = document.getElementById(screenId);
+            target.classList.remove('hide');
+            target.classList.add('screen-active');
             window.scrollTo(0,0);
         }
 
