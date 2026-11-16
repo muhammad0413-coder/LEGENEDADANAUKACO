@@ -474,41 +474,71 @@ function showScreen(screenId) {
     playSound('bg');
 }
 
-/* --- API CALLS --- */
+/* --- API CALLS & OFFLINE FALLBACK --- */
 async function callAPI(action, data = {}) {
     try {
         const payload = { action, ...data };
+        
+        // Membatasi waktu tunggu API maksimal 3 detik agar tidak macet
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
         const res = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
+        
         return await res.json();
     } catch(e) {
-        console.error("API Error", e);
-        return {status: "error"};
+        console.warn("Koneksi API Gagal, mengalihkan ke mode Offline.", e);
+        return {status: "offline_fallback"};
     }
 }
 
 async function login() {
-    const nama = document.getElementById('login-nama').value;
+    const nama = document.getElementById('login-nama').value.trim();
     const kelas = document.getElementById('login-kelas').value;
-    if(!nama || !kelas) return alert("Silakan masukkan nama dan kelas!");
+    if(!nama) return alert("Silakan masukkan nama lengkap kamu!");
     
     showLoading(true, "Membuka Gerbang...");
     const res = await callAPI("login", {nama, kelas});
     showLoading(false);
     
+    // SISTEM HYBRID: Jika API sukses gunakan data API, jika gagal gunakan Local Storage
     if(res.status === "success") {
         currentUser = res.data;
-        updateDashboardInfo();
-        showScreen('screen-dashboard');
+        // Simpan cadangan ke perangkat
+        localStorage.setItem("danaukaco_user_" + nama, JSON.stringify(currentUser));
     } else {
-        alert("Gagal masuk. Coba lagi.");
+        // --- MODE OFFLINE AKTIF ---
+        let savedData = localStorage.getItem("danaukaco_user_" + nama);
+        if(savedData) {
+            currentUser = JSON.parse(savedData);
+        } else {
+            currentUser = { 
+                id: Date.now().toString(), 
+                nama: nama, 
+                kelas: kelas, 
+                bintang: 0, 
+                skor: 0, 
+                level: 1 
+            };
+        }
+        // Simpan state baru ke perangkat
+        localStorage.setItem("danaukaco_user_" + nama, JSON.stringify(currentUser));
+        // Munculkan notifikasi kecil (opsional) agar guru tahu sedang mode offline
+        console.log("Memasuki Mode Offline. Progress disimpan di perangkat.");
     }
+    
+    updateDashboardInfo();
+    showScreen('screen-dashboard');
 }
 
 function logout() {
     currentUser = null;
+    document.getElementById('login-nama').value = '';
     showScreen('screen-login');
 }
 
@@ -597,23 +627,27 @@ async function finishQuiz() {
     });
     showLoading(false);
     
-    if(res.status === "success") {
-        currentUser.skor += score;
-        currentUser.bintang += Math.floor(score/20);
-        updateDashboardInfo();
-        
-        document.getElementById('materi-container').innerHTML = `
-            <div class="text-center">
-                <i class="fas fa-trophy fa-4x text-yellow-500 mb-4"></i>
-                <h2 class="font-heading text-3xl text-teal-800 mb-2">Kuis Selesai!</h2>
-                <p class="text-xl">Skor Kamu: <span class="font-bold text-blue-600">${score}</span> / 100</p>
-                <p class="text-lg">Jawaban Benar: ${correctAns}</p>
-                <button onclick="showScreen('screen-dashboard')" class="btn-game mt-6 px-6 py-3">Kembali ke Peta</button>
-            </div>
-        `;
-        document.getElementById('btn-kuis').classList.add('hidden');
-        showScreen('screen-materi');
-    }
+    // Update data lokal terlepas API sukses atau gagal
+    currentUser.skor += score;
+    currentUser.bintang += Math.floor(score/20);
+    currentUser.level = Math.floor(currentUser.skor / 100) + 1; // Naik 1 level tiap 100 poin
+    
+    // Simpan ke memori HP/Laptop
+    localStorage.setItem("danaukaco_user_" + currentUser.nama, JSON.stringify(currentUser));
+    
+    updateDashboardInfo();
+    
+    document.getElementById('materi-container').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-trophy fa-4x text-yellow-500 mb-4"></i>
+            <h2 class="font-heading text-3xl text-teal-800 mb-2">Kuis Selesai!</h2>
+            <p class="text-xl">Skor Kamu: <span class="font-bold text-blue-600">${score}</span> / 100</p>
+            <p class="text-lg">Jawaban Benar: ${correctAns}</p>
+            <button onclick="showScreen('screen-dashboard')" class="btn-game mt-6 px-6 py-3">Kembali ke Peta</button>
+        </div>
+    `;
+    document.getElementById('btn-kuis').classList.add('hidden');
+    showScreen('screen-materi');
 }
 
 // Text to Speech
@@ -660,8 +694,14 @@ async function finishGame(gameName) {
             <button onclick="showScreen('screen-dashboard')" class="btn-game mt-6 px-6 py-3">Kembali</button>
         </div>
     `;
+    
+    // Panggil API di background
     callAPI("saveGame", { id: currentUser.id, nama: currentUser.nama, kelas: currentUser.kelas, game: gameName, status: "Selesai" });
+    
+    // Langsung update state lokal agar UI cepat & tetap tersimpan
     currentUser.bintang += 1;
+    localStorage.setItem("danaukaco_user_" + currentUser.nama, JSON.stringify(currentUser));
+    
     updateDashboardInfo();
 }
 
