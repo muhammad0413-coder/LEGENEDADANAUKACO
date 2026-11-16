@@ -385,7 +385,8 @@
         /** =========================================================================
          * APP STATE & API LOGIC
          * ========================================================================= */
-        // CATATAN PENTING: Gunakan URL API dari Apps Script yang telah dideploy
+         
+        // CATATAN PENTING: Ganti URL di bawah ini dengan URL Web App milik Anda yang baru!!!
         const API_URL = "https://script.google.com/macros/s/AKfycbzjtS776lknsr1P4uh94WLpX1nCFtDIRBEwEpbhDCRuyBK0CKVXb9efagRQwrmMjFfFetQ/exec";
         
         let currentUser = null;
@@ -449,7 +450,7 @@
                 showScreen('screen-dashboard');
             } else {
                 showToast("Gagal terhubung ke server. Bermain dalam mode luring sementara.", true);
-                // Fallback local jika API gagal
+                // Fallback local jika API gagal (misal belum deploy atau URL salah)
                 currentUser = { id_siswa: 'LOCAL123', nama: nama, kelas: "6" };
                 document.getElementById('dash-nama').innerText = nama;
                 showScreen('screen-dashboard');
@@ -579,7 +580,7 @@
             btn.onclick = () => { showScreen('screen-dashboard'); loadProgress(); };
             
             // Simpan ke API
-            if(currentUser) {
+            if(currentUser && currentUser.id_siswa !== 'LOCAL123') {
                 apiRequest({
                     action: "saveQuiz",
                     id_siswa: currentUser.id_siswa,
@@ -619,7 +620,7 @@
 
         function saveGameScore(score) {
             document.getElementById('game-score').innerText = score;
-            if(currentUser) {
+            if(currentUser && currentUser.id_siswa !== 'LOCAL123') {
                 apiRequest({
                     action: "saveGame",
                     id_siswa: currentUser.id_siswa,
