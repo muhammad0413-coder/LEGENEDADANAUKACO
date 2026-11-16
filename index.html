@@ -50,6 +50,11 @@
         .screen-active {
             animation: fadeInZoom 0.4s ease-out forwards;
         }
+        
+        /* Layout Profesional SPA */
+        .page { display: none; }
+        .page.active { display: block; animation: fadeInZoom 0.4s ease-out forwards; }
+        .sidebar-btn.active { background-color: #1e3a8a; border-left: 4px solid #facc15; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -87,8 +92,8 @@
         Pesan Notifikasi
     </div>
 
-    <!-- 1. LOGIN SCREEN -->
-    <div id="screen-login" class="screen screen-active min-h-screen flex flex-col items-center justify-center bg-blue-900 bg-[url('https://placehold.co/1920x1080/1e3a8a/3b82f6?text=Danau+Kaco+Hutan+Tropis')] bg-cover bg-blend-overlay text-white p-4 relative z-10">
+    <!-- 1. LOGIN SCREEN (TERPISAH & TERISOLASI) -->
+    <div id="screen-login" class="min-h-screen flex flex-col items-center justify-center bg-blue-900 bg-[url('https://placehold.co/1920x1080/1e3a8a/3b82f6?text=Danau+Kaco+Hutan+Tropis')] bg-cover bg-blend-overlay text-white p-4 relative z-50 w-full">
         <div class="glass-panel text-center p-8 max-w-md w-full animate-pop">
             <div class="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-yellow-400 shadow-lg">
                 <span class="text-4xl">📖</span>
@@ -96,16 +101,16 @@
             <h1 class="font-heading text-3xl text-blue-900 mb-2">Petualangan Literasi</h1>
             <h2 class="font-bold text-xl text-blue-700 mb-6">Legenda Danau Kaco</h2>
             
-            <!-- ATURAN MUTLAK LOGIN -->
-            <div class="mb-4">
-                <input type="text" id="input-nama" placeholder="Masukkan Nama Lengkapmu..." class="w-full text-center px-4 py-3 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:outline-none text-gray-800 font-bold text-lg shadow-inner">
+            <!-- ATURAN MUTLAK LOGIN: NAMA SAJA + KELAS 6 PERMANEN -->
+            <div class="mb-2">
+                <input type="text" id="input-nama" placeholder="Masukkan Nama Lengkapmu..." autocomplete="off" class="w-full text-center px-4 py-4 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:outline-none text-gray-800 font-bold text-lg shadow-inner">
             </div>
-            <div class="bg-blue-600 text-white font-black text-xl py-2 px-4 rounded-lg mb-6 inline-block shadow-md">
+            <div class="bg-blue-600 text-white font-black text-xl py-2 px-6 rounded-lg mb-8 inline-block shadow-md">
                 KELAS 6
             </div>
             
-            <button onclick="handleLogin()" class="w-full btn-bounce bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-heading text-xl py-4 rounded-xl shadow-3d mb-2">
-                MULAI PETUALANGAN!
+            <button onclick="handleLogin()" class="w-full btn-bounce bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-heading text-xl py-4 rounded-xl shadow-3d mb-2 transition-colors">
+                MASUK KE PETUALANGAN!
             </button>
             <div id="login-loader" class="hide mt-4">
                 <div class="loader"></div>
@@ -114,161 +119,234 @@
         </div>
     </div>
 
-    <!-- 2. DASHBOARD SCREEN -->
-    <div id="screen-dashboard" class="screen hide min-h-screen bg-adventure relative p-4 pb-24">
-        <!-- Header / Player Info -->
-        <div class="glass-panel flex justify-between items-center p-4 mb-6 sticky top-4 z-40">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white font-bold text-xl">👤</div>
-                <div>
-                    <h3 id="dash-nama" class="font-bold text-blue-900 leading-tight">Nama Siswa</h3>
-                    <p class="text-sm font-bold text-gray-600">Kelas 6 | <span id="dash-xp" class="text-yellow-600">0 XP</span></p>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="showScreen('screen-teacher')" class="bg-purple-600 text-white px-3 py-1 rounded-lg font-bold text-sm btn-bounce">Guru</button>
-                <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm btn-bounce">Keluar</button>
-            </div>
-        </div>
-
-        <div class="max-w-4xl mx-auto">
-            <h2 class="font-heading text-3xl text-white text-center mb-8 drop-shadow-md">Peta Petualangan</h2>
-            
-            <!-- Map Paths -->
-            <div class="flex flex-col items-center gap-8 relative">
-                <!-- Pos 1 -->
-                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.1s;">
-                    <div onclick="openMaterial(1)" class="map-node node-active btn-bounce">1</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Mengenal Cerita Rakyat</div>
-                </div>
-                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
-                <!-- Pos 2 -->
-                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.2s;">
-                    <div onclick="openMaterial(2)" class="map-node node-locked btn-bounce" id="node-2">2</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Legenda Danau Kaco</div>
-                </div>
-                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
-                <!-- Pos 3 -->
-                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.3s;">
-                    <div onclick="openMaterial(3)" class="map-node node-locked btn-bounce" id="node-3">3</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Unsur Intrinsik Cerita</div>
-                </div>
-                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
-                <!-- Pos 4 -->
-                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.4s;">
-                    <div onclick="openMaterial(4)" class="map-node node-locked btn-bounce" id="node-4">4</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Tokoh & Penokohan</div>
-                </div>
-                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
-                <!-- Pos 5 -->
-                <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.5s;">
-                    <div onclick="openMaterial(5)" class="map-node node-locked btn-bounce" id="node-5">5</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64">Alur & Amanat</div>
-                </div>
-                <div class="h-8 w-2 bg-blue-300 opacity-50 rounded"></div>
-                <!-- Pos 6 -->
-                <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.6s;">
-                    <div onclick="openMaterial(6)" class="map-node node-locked btn-bounce" id="node-6">6</div>
-                    <div class="glass-panel px-4 py-2 text-blue-900 font-bold w-64 text-right">Kosakata & Pemahaman</div>
-                </div>
-            </div>
-
-            <!-- Games Section -->
-            <div class="mt-12 glass-panel p-6">
-                <h3 class="font-heading text-2xl text-blue-800 mb-4 text-center">Zona Bermain (8 Game Seru!)</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button onclick="openGame(1)" class="bg-yellow-400 text-yellow-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">1. Petualangan</button>
-                    <button onclick="openGame(2)" class="bg-green-400 text-green-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">2. Susun Cerita</button>
-                    <button onclick="openGame(3)" class="bg-blue-400 text-blue-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">3. Tebak Tokoh</button>
-                    <button onclick="openGame(4)" class="bg-purple-400 text-purple-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">4. Pasangan</button>
-                    <button onclick="openGame(5)" class="bg-pink-400 text-pink-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">5. Labirin</button>
-                    <button onclick="openGame(6)" class="bg-orange-400 text-orange-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">6. Benar/Salah</button>
-                    <button onclick="openGame(7)" class="bg-teal-400 text-teal-900 font-bold p-4 rounded-xl shadow-3d btn-bounce">7. Kata Rahasia</button>
-                    <button onclick="openGame(8)" class="bg-red-500 text-white font-bold p-4 rounded-xl shadow-3d btn-bounce">8. Kuis Boss</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. MATERIAL SCREEN -->
-    <div id="screen-material" class="screen hide min-h-screen bg-white p-4">
-        <div class="max-w-3xl mx-auto">
-            <button onclick="showScreen('screen-dashboard')" class="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-bounce">⬅ Kembali ke Peta</button>
-            <div id="material-content" class="bg-white rounded-2xl shadow-lg p-6 lg:p-10 border border-blue-100">
-                <!-- Content Injected via JS -->
-            </div>
-            
-            <div class="mt-8 flex justify-between items-center border-t pt-6">
-                <button onclick="startQuiz()" class="w-full bg-green-500 hover:bg-green-600 text-white font-heading text-xl py-4 rounded-xl shadow-3d btn-bounce animate-pulse">
-                    MULAI KUIS MATERI INI (10 SOAL)
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. QUIZ SCREEN -->
-    <div id="screen-quiz" class="screen hide min-h-screen bg-blue-900 p-4 flex flex-col items-center justify-center">
-        <div class="max-w-2xl w-full glass-panel p-8">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h3 class="font-heading text-xl text-blue-800">Kuis Pengetahuan</h3>
-                <div class="bg-blue-100 text-blue-800 font-bold px-4 py-2 rounded-full">Soal: <span id="quiz-progress">1/10</span></div>
-            </div>
-            
-            <div id="quiz-question" class="text-2xl font-bold text-gray-800 mb-8 text-center leading-relaxed">
-                Pertanyaan akan muncul di sini?
-            </div>
-            
-            <div id="quiz-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Options Injected via JS -->
-            </div>
-            
-            <div id="quiz-feedback" class="mt-6 p-4 rounded-lg font-bold text-center hide"></div>
-            
-            <button id="quiz-next-btn" onclick="nextQuestion()" class="hide w-full mt-6 bg-blue-500 text-white font-bold py-3 rounded-xl shadow-3d btn-bounce">Soal Selanjutnya ➡</button>
-        </div>
-    </div>
-
-    <!-- 5. GAMES SCREEN -->
-    <div id="screen-game" class="screen hide min-h-screen bg-green-900 p-4 flex flex-col items-center">
-        <div class="w-full max-w-4xl flex justify-between mb-4">
-            <button onclick="showScreen('screen-dashboard')" class="bg-white text-green-900 font-bold py-2 px-4 rounded-lg btn-bounce shadow">⬅ Keluar Game</button>
-            <div class="bg-yellow-400 text-yellow-900 font-bold py-2 px-6 rounded-full shadow border-2 border-white">
-                Skor: <span id="game-score">0</span>
-            </div>
-        </div>
+    <!-- 2. MAIN APP LAYOUT (Disembunyikan sepenuhnya sebelum Login) -->
+    <div id="app-layout" class="hide flex h-screen w-full bg-gray-50 overflow-hidden">
         
-        <div id="game-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-6 min-h-[60vh] border-8 border-green-700 relative overflow-hidden">
-            <!-- Game Canvas / UI Injected here -->
-        </div>
-    </div>
+        <!-- SIDEBAR NAVIGASI (Desktop) -->
+        <aside class="w-64 bg-blue-900 text-white flex-col h-full shadow-2xl hidden md:flex z-40">
+           <div class="p-6 border-b border-blue-800 flex items-center gap-4">
+               <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-2xl border-2 border-white shadow-inner">👦</div>
+               <div class="overflow-hidden">
+                   <h3 id="sidebar-nama" class="font-bold text-lg leading-tight truncate">Nama</h3>
+                   <p class="text-sm text-blue-300 font-bold tracking-wide">Kelas 6 | <span id="sidebar-xp" class="text-yellow-400">0 XP</span></p>
+               </div>
+           </div>
+           <nav class="flex-1 overflow-y-auto p-4 space-y-3 font-bold text-blue-100">
+               <button onclick="switchPage('page-dashboard')" id="nav-page-dashboard" class="sidebar-btn active w-full text-left p-3 rounded-lg hover:bg-blue-800 flex items-center gap-3 transition-colors"><span class="text-xl">🗺️</span> Beranda</button>
+               <button onclick="switchPage('page-material-list')" id="nav-page-material-list" class="sidebar-btn w-full text-left p-3 rounded-lg hover:bg-blue-800 flex items-center gap-3 transition-colors"><span class="text-xl">📚</span> Materi</button>
+               <button onclick="switchPage('page-game-list')" id="nav-page-game-list" class="sidebar-btn w-full text-left p-3 rounded-lg hover:bg-blue-800 flex items-center gap-3 transition-colors"><span class="text-xl">🎮</span> Permainan</button>
+               <button onclick="switchPage('page-teacher')" id="nav-page-teacher" class="sidebar-btn w-full text-left p-3 rounded-lg hover:bg-blue-800 flex items-center gap-3 transition-colors"><span class="text-xl">👨‍🏫</span> Dashboard Guru</button>
+           </nav>
+           <div class="p-4 border-t border-blue-800">
+               <button onclick="logout()" class="w-full bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold flex items-center justify-center gap-2 btn-bounce shadow-md">Keluar / Ganti Siswa</button>
+           </div>
+        </aside>
 
-    <!-- 6. TEACHER DASHBOARD -->
-    <div id="screen-teacher" class="screen hide min-h-screen bg-gray-100 p-6">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="font-heading text-3xl text-purple-800">Dashboard Guru Kelas 6</h2>
-                <button onclick="showScreen('screen-dashboard')" class="bg-gray-800 text-white px-4 py-2 rounded-lg btn-bounce">Tutup</button>
-            </div>
-            <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-purple-100 text-purple-900">
-                            <th class="p-3 border">Nama Siswa</th>
-                            <th class="p-3 border">Mat 1</th>
-                            <th class="p-3 border">Mat 2</th>
-                            <th class="p-3 border">Mat 3</th>
-                            <th class="p-3 border">Mat 4</th>
-                            <th class="p-3 border">Mat 5</th>
-                            <th class="p-3 border">Mat 6</th>
-                            <th class="p-3 border">Total XP</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teacher-table-body">
-                        <!-- Data dari API -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <!-- AREA KONTEN UTAMA (SPA Routing) -->
+        <main class="flex-1 h-full overflow-y-auto relative bg-adventure" id="main-content">
+           
+           <!-- Mobile Header -->
+           <div class="md:hidden bg-blue-900 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md">
+               <div class="flex items-center gap-3">
+                   <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-xl font-bold">👦</div>
+                   <div>
+                       <h3 id="mobile-nama" class="font-bold leading-tight truncate w-32">Nama</h3>
+                       <p class="text-xs text-yellow-400 font-bold">Kelas 6 | <span id="mobile-xp">0 XP</span></p>
+                   </div>
+               </div>
+               <button onclick="document.getElementById('mobile-menu').classList.toggle('hide')" class="text-3xl">☰</button>
+           </div>
+           
+           <!-- Mobile Dropdown Menu -->
+           <div id="mobile-menu" class="hide md:hidden absolute top-[72px] left-0 w-full bg-blue-900 text-white z-40 shadow-xl border-t border-blue-800 font-bold">
+                <nav class="p-2">
+                   <button onclick="switchPage('page-dashboard'); document.getElementById('mobile-menu').classList.add('hide')" class="w-full text-left p-4 border-b border-blue-800">🗺️ Beranda</button>
+                   <button onclick="switchPage('page-material-list'); document.getElementById('mobile-menu').classList.add('hide')" class="w-full text-left p-4 border-b border-blue-800">📚 Materi Belajar</button>
+                   <button onclick="switchPage('page-game-list'); document.getElementById('mobile-menu').classList.add('hide')" class="w-full text-left p-4 border-b border-blue-800">🎮 Permainan</button>
+                   <button onclick="switchPage('page-teacher'); document.getElementById('mobile-menu').classList.add('hide')" class="w-full text-left p-4 border-b border-blue-800">👨‍🏫 Dashboard Guru</button>
+                   <button onclick="logout()" class="w-full text-left p-4 text-red-400">🚪 Keluar</button>
+                </nav>
+           </div>
+
+           <!-- PENGELOLAAN HALAMAN-HALAMAN DI DALAM APLIKASI -->
+           <div class="p-4 md:p-8 max-w-5xl mx-auto pb-24">
+               
+               <!-- HALAMAN 1: DASHBOARD BERANDA (PETA) -->
+               <div id="page-dashboard" class="page active">
+                    <h2 class="font-heading text-4xl text-white text-center mb-10 drop-shadow-lg">Peta Petualangan Literasi</h2>
+                    <div class="flex flex-col items-center gap-6 relative">
+                        <!-- Pos 1 -->
+                        <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.1s;">
+                            <div onclick="openMaterial(1)" class="map-node node-active btn-bounce shadow-lg">1</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(1)">Mengenal Cerita Rakyat</div>
+                        </div>
+                        <div class="h-10 w-3 bg-white opacity-60 rounded shadow-sm"></div>
+                        <!-- Pos 2 -->
+                        <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.2s;">
+                            <div onclick="openMaterial(2)" class="map-node node-locked btn-bounce shadow-lg" id="node-2">2</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(2)">Legenda Danau Kaco</div>
+                        </div>
+                        <div class="h-10 w-3 bg-white opacity-60 rounded shadow-sm"></div>
+                        <!-- Pos 3 -->
+                        <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.3s;">
+                            <div onclick="openMaterial(3)" class="map-node node-locked btn-bounce shadow-lg" id="node-3">3</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(3)">Unsur Intrinsik Cerita</div>
+                        </div>
+                        <div class="h-10 w-3 bg-white opacity-60 rounded shadow-sm"></div>
+                        <!-- Pos 4 -->
+                        <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.4s;">
+                            <div onclick="openMaterial(4)" class="map-node node-locked btn-bounce shadow-lg" id="node-4">4</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(4)">Tokoh & Penokohan</div>
+                        </div>
+                        <div class="h-10 w-3 bg-white opacity-60 rounded shadow-sm"></div>
+                        <!-- Pos 5 -->
+                        <div class="flex items-center gap-4 animate-pop" style="animation-delay: 0.5s;">
+                            <div onclick="openMaterial(5)" class="map-node node-locked btn-bounce shadow-lg" id="node-5">5</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(5)">Alur & Amanat</div>
+                        </div>
+                        <div class="h-10 w-3 bg-white opacity-60 rounded shadow-sm"></div>
+                        <!-- Pos 6 -->
+                        <div class="flex items-center gap-4 flex-row-reverse animate-pop" style="animation-delay: 0.6s;">
+                            <div onclick="openMaterial(6)" class="map-node node-locked btn-bounce shadow-lg" id="node-6">6</div>
+                            <div class="glass-panel px-4 py-3 text-blue-900 font-bold w-64 text-center cursor-pointer hover:bg-white" onclick="openMaterial(6)">Kosakata & Pemahaman</div>
+                        </div>
+                    </div>
+               </div>
+
+               <!-- HALAMAN 2: DAFTAR MATERI LENGKAP -->
+               <div id="page-material-list" class="page">
+                   <h2 class="font-heading text-4xl text-white text-center mb-8 drop-shadow-lg">Daftar Materi Belajar</h2>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <!-- Generated by code or static -->
+                       <div onclick="openMaterial(1)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">1</div>
+                           <h3 class="text-xl font-bold text-blue-900">Mengenal Cerita Rakyat</h3>
+                       </div>
+                       <div onclick="openMaterial(2)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">2</div>
+                           <h3 class="text-xl font-bold text-blue-900">Legenda Danau Kaco (Cerita Penuh)</h3>
+                       </div>
+                       <div onclick="openMaterial(3)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">3</div>
+                           <h3 class="text-xl font-bold text-blue-900">Unsur Intrinsik Cerita</h3>
+                       </div>
+                       <div onclick="openMaterial(4)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">4</div>
+                           <h3 class="text-xl font-bold text-blue-900">Tokoh dan Penokohan</h3>
+                       </div>
+                       <div onclick="openMaterial(5)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">5</div>
+                           <h3 class="text-xl font-bold text-blue-900">Alur dan Amanat</h3>
+                       </div>
+                       <div onclick="openMaterial(6)" class="glass-panel p-6 cursor-pointer hover:bg-white hover:scale-105 transition-transform flex items-center gap-4">
+                           <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold">6</div>
+                           <h3 class="text-xl font-bold text-blue-900">Kosakata dan Pemahaman</h3>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- HALAMAN 3: DETAIL MATERI (Membaca/Menonton) -->
+               <div id="page-material-detail" class="page">
+                   <div class="glass-panel p-4 md:p-8 bg-white/95">
+                        <button onclick="switchPage('page-material-list')" class="mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg btn-bounce flex items-center gap-2">⬅ Kembali ke Daftar Materi</button>
+                        
+                        <div id="material-content" class="bg-white rounded-2xl shadow p-4 md:p-8 border border-gray-100">
+                            <!-- Injected by JS -->
+                        </div>
+                        
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <button onclick="startQuiz()" class="w-full bg-green-500 hover:bg-green-600 text-white font-heading text-xl md:text-2xl py-5 rounded-xl shadow-3d btn-bounce animate-pulse">
+                                MULAI KUIS MATERI INI (10 SOAL) 🚀
+                            </button>
+                        </div>
+                   </div>
+               </div>
+
+               <!-- HALAMAN 4: DAFTAR PERMAINAN EDUKASI -->
+               <div id="page-game-list" class="page">
+                   <h2 class="font-heading text-4xl text-white text-center mb-8 drop-shadow-lg">Zona Bermain Edukatif</h2>
+                   <div class="glass-panel p-6 md:p-8">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            <button onclick="openGame(1)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🗺️</span> 1. Petualangan</button>
+                            <button onclick="openGame(2)" class="bg-green-400 hover:bg-green-300 text-green-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🧩</span> 2. Susun Cerita</button>
+                            <button onclick="openGame(3)" class="bg-blue-400 hover:bg-blue-300 text-blue-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🤔</span> 3. Tebak Tokoh</button>
+                            <button onclick="openGame(4)" class="bg-purple-400 hover:bg-purple-300 text-purple-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🃏</span> 4. Pasangan</button>
+                            <button onclick="openGame(5)" class="bg-pink-400 hover:bg-pink-300 text-pink-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🧭</span> 5. Labirin</button>
+                            <button onclick="openGame(6)" class="bg-orange-400 hover:bg-orange-300 text-orange-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">✅</span> 6. Benar/Salah</button>
+                            <button onclick="openGame(7)" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🔤</span> 7. Kata Rahasia</button>
+                            <button onclick="openGame(8)" class="bg-red-500 hover:bg-red-400 text-white font-bold p-6 rounded-2xl shadow-3d btn-bounce flex flex-col items-center text-center gap-2"><span class="text-4xl">🦅</span> 8. Kuis Boss</button>
+                        </div>
+                   </div>
+               </div>
+
+               <!-- HALAMAN 5: DETAIL PERMAINAN -->
+               <div id="page-game-detail" class="page">
+                   <div class="glass-panel p-4 md:p-6 bg-green-900 shadow-2xl rounded-3xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <button onclick="switchPage('page-game-list')" class="bg-white text-green-900 font-bold py-2 px-4 rounded-lg btn-bounce shadow-md flex items-center gap-2">⬅ Keluar Game</button>
+                            <div class="bg-yellow-400 text-yellow-900 font-bold py-2 px-6 rounded-full shadow border-2 border-white text-lg">
+                                Skor Game: <span id="game-score">0</span>
+                            </div>
+                        </div>
+                        
+                        <div id="game-container" class="w-full bg-white rounded-2xl shadow-inner p-4 md:p-8 min-h-[50vh] border-4 border-green-700 relative overflow-hidden">
+                            <!-- Game Canvas / UI Injected here -->
+                        </div>
+                   </div>
+               </div>
+
+               <!-- HALAMAN 6: KUIS (Mode Gelap Fokus) -->
+               <div id="page-quiz" class="page">
+                   <div class="max-w-2xl mx-auto glass-panel p-6 md:p-10 bg-blue-900 border-4 border-blue-500">
+                        <div class="flex justify-between items-center mb-8 border-b border-blue-700 pb-4">
+                            <h3 class="font-heading text-2xl text-white">Evaluasi Materi</h3>
+                            <div class="bg-blue-600 text-white font-bold px-4 py-2 rounded-full border border-blue-400 shadow-inner">Soal: <span id="quiz-progress">1/10</span></div>
+                        </div>
+                        
+                        <div id="quiz-question" class="text-2xl md:text-3xl font-bold text-white mb-10 text-center leading-relaxed drop-shadow-md">
+                            Pertanyaan akan muncul di sini?
+                        </div>
+                        
+                        <div id="quiz-options" class="grid grid-cols-1 gap-4">
+                            <!-- Options Injected via JS -->
+                        </div>
+                        
+                        <div id="quiz-feedback" class="mt-8 p-4 rounded-lg font-bold text-center hide text-xl"></div>
+                        
+                        <button id="quiz-next-btn" onclick="nextQuestion()" class="hide w-full mt-8 bg-yellow-400 text-yellow-900 font-bold py-4 rounded-xl shadow-3d btn-bounce text-xl">Soal Selanjutnya ➡</button>
+                   </div>
+               </div>
+
+               <!-- HALAMAN 7: DASHBOARD GURU -->
+               <div id="page-teacher" class="page">
+                   <div class="glass-panel p-6 bg-white/95">
+                        <div class="flex justify-between items-center mb-8 border-b pb-4">
+                            <h2 class="font-heading text-3xl text-purple-800 flex items-center gap-3"><span class="text-4xl">👨‍🏫</span> Panel Evaluasi Guru Kelas 6</h2>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl border p-2 overflow-x-auto shadow-inner">
+                            <table class="w-full text-left border-collapse min-w-max">
+                                <thead>
+                                    <tr class="bg-purple-600 text-white font-bold">
+                                        <th class="p-4 border rounded-tl-lg">Nama Siswa</th>
+                                        <th class="p-4 border">Mat 1</th>
+                                        <th class="p-4 border">Mat 2</th>
+                                        <th class="p-4 border">Mat 3</th>
+                                        <th class="p-4 border">Mat 4</th>
+                                        <th class="p-4 border">Mat 5</th>
+                                        <th class="p-4 border">Mat 6</th>
+                                        <th class="p-4 border rounded-tr-lg">Total XP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacher-table-body" class="text-gray-700">
+                                    <!-- Data dari API -->
+                                </tbody>
+                            </table>
+                        </div>
+                   </div>
+               </div>
+
+           </div>
+        </main>
     </div>
 
     <script>
@@ -413,7 +491,6 @@
 
         async function apiRequest(data) {
             try {
-                // Gunakan text/plain untuk hindari CORS preflight di Apps Script
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -426,21 +503,26 @@
             }
         }
 
-        function showScreen(screenId) {
-            // Sembunyikan semua layar dan hapus animasi aktif
-            document.querySelectorAll('.screen').forEach(s => {
-                s.classList.add('hide');
-                s.classList.remove('screen-active');
-            });
-            // Tampilkan layar target dan jalankan animasi
-            const target = document.getElementById(screenId);
-            target.classList.remove('hide');
-            target.classList.add('screen-active');
-            window.scrollTo(0,0);
+        // SPA Navigation System Profesional
+        function switchPage(pageId) {
+            // Sembunyikan semua halaman dalam layout aplikasi
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Tampilkan halaman yang dituju
+            document.getElementById(pageId).classList.add('active');
+            
+            // Perbarui state sidebar agar indikator menu aktif terlihat profesional
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`nav-${pageId}`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            // Tindakan khusus per halaman (seperti meload data)
+            if(pageId === 'page-teacher') loadTeacherData();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         /** =========================================================================
-         * LOGIN LOGIC (Aturan Mutlak)
+         * LOGIN LOGIC (Alur Mutlak)
          * ========================================================================= */
         async function handleLogin() {
             const nama = document.getElementById('input-nama').value.trim();
@@ -459,24 +541,38 @@
             
             if (res.status === "success") {
                 currentUser = res.data;
-                document.getElementById('dash-nama').innerText = currentUser.nama;
-                showToast(`Selamat datang, ${currentUser.nama}!`);
+                // Update UI Profil di seluruh aplikasi
+                document.getElementById('sidebar-nama').innerText = currentUser.nama;
+                document.getElementById('mobile-nama').innerText = currentUser.nama;
+                
+                showToast(`Selamat datang di Petualangan, ${currentUser.nama}!`);
                 playSfx('correct');
                 loadProgress();
-                showScreen('screen-dashboard');
+                
+                // Transisi MUTLAK: Hilangkan Layar Login, Tampilkan Layar Aplikasi (SPA Mode)
+                document.getElementById('screen-login').classList.add('hide');
+                document.getElementById('app-layout').classList.remove('hide');
+                switchPage('page-dashboard');
             } else {
                 showToast("Gagal terhubung ke server. Bermain dalam mode luring sementara.", true);
-                // Fallback local jika API gagal (misal belum deploy atau URL salah)
+                // Fallback local jika API gagal
                 currentUser = { id_siswa: 'LOCAL123', nama: nama, kelas: "6" };
-                document.getElementById('dash-nama').innerText = nama;
-                showScreen('screen-dashboard');
+                document.getElementById('sidebar-nama').innerText = nama;
+                document.getElementById('mobile-nama').innerText = nama;
+                
+                document.getElementById('screen-login').classList.add('hide');
+                document.getElementById('app-layout').classList.remove('hide');
+                switchPage('page-dashboard');
             }
         }
 
         function logout() {
             currentUser = null;
             document.getElementById('input-nama').value = '';
-            showScreen('screen-login');
+            
+            // Transisi MUTLAK: Hilangkan Layar Aplikasi, Kembalikan Layar Login
+            document.getElementById('app-layout').classList.add('hide');
+            document.getElementById('screen-login').classList.remove('hide');
         }
 
         async function loadProgress() {
@@ -484,8 +580,11 @@
             const res = await apiRequest({ action: "getStudentData", id_siswa: currentUser.id_siswa });
             if(res.status === "success") {
                 const prog = res.progress;
-                document.getElementById('dash-xp').innerText = `${prog.xp} XP`;
-                // Unlock nodes logic based on progress
+                // Update profil XP
+                document.getElementById('sidebar-xp').innerText = `${prog.xp} XP`;
+                document.getElementById('mobile-xp').innerText = `${prog.xp} XP`;
+                
+                // Unlock node di Peta Dashboard
                 if(prog.m1 > 0) document.getElementById('node-2').classList.replace('node-locked', 'node-active');
                 if(prog.m2 > 0) document.getElementById('node-3').classList.replace('node-locked', 'node-active');
                 if(prog.m3 > 0) document.getElementById('node-4').classList.replace('node-locked', 'node-active');
@@ -502,18 +601,18 @@
             currentMaterial = id;
             const data = materiData[id];
             
-            let html = `<h2 class="font-heading text-3xl text-blue-900 mb-6 text-center">${data.title}</h2>`;
+            let html = `<h2 class="font-heading text-3xl md:text-4xl text-blue-900 mb-6 text-center border-b pb-4">${data.title}</h2>`;
             html += data.content;
             
             document.getElementById('material-content').innerHTML = html;
-            showScreen('screen-material');
+            switchPage('page-material-detail');
         }
 
         function readAloud() {
             const text = document.getElementById('story-text').innerText;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'id-ID';
-            utterance.rate = 0.9; // Sedikit lebih lambat agar jelas
+            utterance.rate = 0.9;
             speechSynthesis.speak(utterance);
         }
 
@@ -523,7 +622,7 @@
             quizScore = 0;
             quizAnswers = { benar: 0, salah: 0 };
             renderQuiz();
-            showScreen('screen-quiz');
+            switchPage('page-quiz');
         }
 
         function renderQuiz() {
@@ -535,7 +634,8 @@
             
             let optionsHtml = '';
             qData.o.forEach((opt, idx) => {
-                optionsHtml += `<button onclick="answerQuiz(${idx})" class="quiz-opt text-left bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-500 font-bold p-4 rounded-xl shadow-md btn-bounce text-lg">${opt}</button>`;
+                // Style opsi diubah jadi lebih cocok dengan mode gelap layar kuis
+                optionsHtml += `<button onclick="answerQuiz(${idx})" class="quiz-opt text-left bg-blue-800 text-white border-2 border-blue-600 hover:border-yellow-400 hover:bg-blue-700 font-bold p-5 rounded-xl shadow-md btn-bounce text-lg md:text-xl transition-colors">${opt}</button>`;
             });
             document.getElementById('quiz-options').innerHTML = optionsHtml;
         }
@@ -551,20 +651,20 @@
             feedback.classList.remove('hide');
             
             if (isCorrect) {
-                btns[selectedIdx].classList.replace('bg-white', 'bg-green-500');
-                btns[selectedIdx].classList.add('text-white');
+                btns[selectedIdx].classList.replace('bg-blue-800', 'bg-green-500');
+                btns[selectedIdx].classList.replace('border-blue-600', 'border-green-400');
                 feedback.innerText = "⭐ BENAR! Luar biasa!";
-                feedback.className = "mt-6 p-4 rounded-lg font-bold text-center bg-green-100 text-green-800 text-xl";
+                feedback.className = "mt-8 p-5 rounded-xl font-bold text-center bg-green-500 text-white text-2xl shadow-lg border-2 border-green-300";
                 quizScore += 10;
                 quizAnswers.benar++;
                 playSfx('correct');
             } else {
-                btns[selectedIdx].classList.replace('bg-white', 'bg-red-500');
-                btns[selectedIdx].classList.add('text-white');
-                btns[qData.a].classList.replace('bg-white', 'bg-green-500');
-                btns[qData.a].classList.add('text-white');
+                btns[selectedIdx].classList.replace('bg-blue-800', 'bg-red-500');
+                btns[selectedIdx].classList.replace('border-blue-600', 'border-red-400');
+                btns[qData.a].classList.replace('bg-blue-800', 'bg-green-500');
+                btns[qData.a].classList.replace('border-blue-600', 'border-green-400');
                 feedback.innerText = "❌ KURANG TEPAT! Perhatikan jawaban yang benar berwarna hijau.";
-                feedback.className = "mt-6 p-4 rounded-lg font-bold text-center bg-red-100 text-red-800 text-xl";
+                feedback.className = "mt-8 p-5 rounded-xl font-bold text-center bg-red-500 text-white text-2xl shadow-lg border-2 border-red-300";
                 quizAnswers.salah++;
                 playSfx('wrong');
             }
@@ -584,16 +684,18 @@
 
         function finishQuiz() {
             document.getElementById('quiz-question').innerHTML = `
-                <div class="text-4xl mb-4">🏆</div>
+                <div class="text-6xl mb-6">🏆</div>
                 KUIS SELESAI!<br>
-                <span class="text-green-500">Skor Kamu: ${quizScore}</span>
+                <span class="text-yellow-400 text-5xl">Skor Kamu: ${quizScore}</span>
             `;
             document.getElementById('quiz-options').innerHTML = '';
             document.getElementById('quiz-feedback').classList.add('hide');
             
             const btn = document.getElementById('quiz-next-btn');
-            btn.innerText = "Kembali ke Peta";
-            btn.onclick = () => { showScreen('screen-dashboard'); loadProgress(); };
+            btn.innerText = "⬅ Kembali ke Peta Petualangan";
+            btn.classList.replace('bg-yellow-400', 'bg-white');
+            btn.classList.replace('text-yellow-900', 'text-blue-900');
+            btn.onclick = () => { switchPage('page-dashboard'); loadProgress(); };
             
             // Simpan ke API
             if(currentUser && currentUser.id_siswa !== 'LOCAL123') {
@@ -619,7 +721,7 @@
             playSfx('click');
             currentGame = id;
             document.getElementById('game-score').innerText = '0';
-            showScreen('screen-game');
+            switchPage('page-game-detail');
             const container = document.getElementById('game-container');
             container.innerHTML = ''; // Bersihkan
 
@@ -864,34 +966,24 @@
          * ========================================================================= */
          async function loadTeacherData() {
             const tbody = document.getElementById('teacher-table-body');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Memuat data...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 font-bold text-gray-500">Memuat data guru dari server...</td></tr>';
             const res = await apiRequest({ action: "getTeacherData" });
             if(res.status === "success" && res.data.length > 0) {
                 let html = '';
                 res.data.forEach(d => {
-                    html += `<tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 font-bold">${d.nama}</td>
-                        <td class="p-3">${d.m1}</td><td class="p-3">${d.m2}</td>
-                        <td class="p-3">${d.m3}</td><td class="p-3">${d.m4}</td>
-                        <td class="p-3">${d.m5}</td><td class="p-3">${d.m6}</td>
-                        <td class="p-3 text-yellow-600 font-bold">${d.xp}</td>
+                    html += `<tr class="border-b hover:bg-purple-50 transition-colors">
+                        <td class="p-4 font-bold text-purple-900 border-r border-gray-200">${d.nama}</td>
+                        <td class="p-4">${d.m1}</td><td class="p-4">${d.m2}</td>
+                        <td class="p-4">${d.m3}</td><td class="p-4">${d.m4}</td>
+                        <td class="p-4">${d.m5}</td><td class="p-4 border-r border-gray-200">${d.m6}</td>
+                        <td class="p-4 text-yellow-600 font-black bg-yellow-50">${d.xp} XP</td>
                     </tr>`;
                 });
                 tbody.innerHTML = html;
             } else {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4">Belum ada data siswa.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-8 font-bold text-red-500">Belum ada data siswa yang tersimpan di Google Sheets.</td></tr>';
             }
          }
-
-         // Override showScreen untuk meload data guru khusus di layar guru
-         const originalShowScreen = showScreen;
-         showScreen = function(id) {
-             originalShowScreen(id);
-             if(id === 'screen-teacher') {
-                 loadTeacherData();
-             }
-         }
-
     </script>
 </body>
 </html>
